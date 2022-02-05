@@ -46,40 +46,39 @@ void print_result(int* arr, int N, char opt){
 int main(int argc, char** argv)
 {
     // read command line arguments
-
-    int N = 1 << 20; // allocate 2^20 = 1024*1024 ~ 1 mil
-
-    int totalThreads = (1 << 20);
     srand(time(0));
-    int blockSize = 256;
-    
-    if (argc >= 2) {
-        totalThreads = atoi(argv[1]);
+    int N = 1 << 20; // work 2 do
+
+    if (argc >= 2){
+        N = atoi(argv[1]);
     }
+    int totalThreads = N;  // we want to have a thread for every unit of work
+    int threadsPerBlock = 256; // how we divide work among blocks
+    
     if (argc >= 3) {
-        blockSize = atoi(argv[2]);
+        threadsPerBlock = atoi(argv[2]);
+        if(threadsPerBlock > totalThreads) {
+            printf("You cannot have more threads then tasks\n");
+            return -1;
+        }
     }
     
-    if (argc >= 4) {
-        N = atoi(argv[3]);
-    }
-
-
-    int numBlocks = totalThreads/blockSize;
-    int threadPerBlock = totalThreads / numBlocks;
-
+    int numBlocks = totalThreads / threadsPerBlock; // the number of blocks required
 
     // validate command line arguments
-    if (totalThreads % blockSize != 0) {
+    if (totalThreads % threadsPerBlock != 0) {  // if this isn't zero we need more blocks
         ++numBlocks;
-        totalThreads = numBlocks*blockSize;
-        
+        totalThreads = numBlocks*threadsPerBlock;
+    
+        // we will over compute in order to skip bounds checking in the kernels
+        N = totalThreads; 
+    
         printf("Warning: Total thread count is not evenly divisible by the block size\n");
         printf("The total number of threads will be rounded up to %d\n", totalThreads);
     }
 
    
-    printf("numBlocks %d whith %d threads\n", numBlocks, threadPerBlock);
+    printf("numBlocks %d whith %d threads used to solve for %d work units\n", numBlocks, threadsPerBlock, N);
 
     // allocate data
     int* c = (int*)malloc(N*sizeof(int));
@@ -88,32 +87,27 @@ int main(int argc, char** argv)
     cudaMalloc((void**)&dev_b, sizeof(int)* N);
     cudaMalloc((void**)&dev_c, sizeof(int)* N);
 
-    // init data
-    //for(int i = 0; i < N; i++){
-    //    c[i] = 0;                      
-    //}
-    
     cudaMemcpy(dev_a, c, N*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_b, c, N*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_c, c, N*sizeof(int), cudaMemcpyHostToDevice);
 
     // generate inputs on GPU because they are going to be used there
-    gen_data<<<numBlocks, threadPerBlock>>>(dev_a);
-    gen_data<<<numBlocks, threadPerBlock>>>(dev_b);
+    gen_data<<<numBlocks, threadsPerBlock>>>(dev_a);
+    gen_data<<<numBlocks, threadsPerBlock>>>(dev_b);
    
-    gpu_add<<<numBlocks, threadPerBlock>>>(dev_a,dev_b,dev_c);
+    gpu_add<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);    
     print_result(c, N, '+'); 
 
-    gpu_sub<<<numBlocks, threadPerBlock>>>(dev_a,dev_b,dev_c);
+    gpu_sub<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '-'); 
 
-    gpu_mult<<<numBlocks, threadPerBlock>>>(dev_a,dev_b,dev_c);
+    gpu_mult<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '*'); 
     
-    gpu_mod<<<numBlocks, threadPerBlock>>>(dev_a,dev_b,dev_c);
+    gpu_mod<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '%'); 
     
