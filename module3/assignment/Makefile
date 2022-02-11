@@ -17,5 +17,6 @@ all: $(PROG1)
 	nvprof --log-file nvprof_run_9 ./prog1 8192 64 2>&1 >> results1
 	cat nvprof_run_* > report
 	rm nvprof_run_*	
-	
+	sed 's/[nmu]s//g' report > report
+	./report2csv.awk report > report.csv	
 	
