@@ -119,6 +119,8 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     int testIdx = rand() % (N-26);
 
     InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar); 
+    printf("Caesar preshif %d \n", shift);
+    PrintCaesarStream(h_caesar, testIdx);
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift);
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
     printf("Caesar shifted %d \n", shift);
