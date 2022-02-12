@@ -121,12 +121,12 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar); 
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift);
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
-    printf("Caesar shifted\n");
+    printf("Caesar shifted %d \n", shift);
     PrintCaesarStream(h_caesar, testIdx);
 
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, 26-shift); 
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
-    printf("Caesar shifted back to original\n");
+    printf("Caesar shifted back to original by %d \n", 26-shift);
     PrintCaesarStream(h_caesar, testIdx);
 
     cudaFreeHost(d_caesar);
@@ -248,7 +248,7 @@ int main(int argc, char** argv)
     cudaDeviceProp prop; 
     cudaGetDeviceProperties(&prop, 0);
     printf("Cuda Device %s\n", prop.name);
-    printf("Problem Size: %d, with grid of (%d,%d)", N, numBlocks, blockSize);
+    printf("Problem Size: %d, with grid of (%d,%d)\n", N, numBlocks, blockSize);
 
     float time;
     cudaEvent_t start, stop;
