@@ -81,19 +81,19 @@ void RunGpuSub(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
                int* d_c, int* h_c){
     gpu_sub<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
     cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
-    print_result(h_c, N, '+');
+    print_result(h_c, N, '-');
 }
 void RunGpuMult(int N, int numBlocks, int blockSize, int* d_a, int* d_b, 
                 int* d_c, int* h_c){
     gpu_mult<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
     cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
-    print_result(h_c, N, '+');
+    print_result(h_c, N, '*');
 }
 void RunGpuMod(int N, int numBlocks, int blockSize, int* d_a, int* d_b, 
                int* d_c, int* h_c){
     gpu_mod<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
     cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
-    print_result(h_c, N, '+');
+    print_result(h_c, N, '%');
 }
 
 void PrintCaesarStream(char* h_caesar, int testIdx){
@@ -119,9 +119,6 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     int testIdx = rand() % (N-26);
 
     InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar); 
-    printf("Caesar preshif %d \n", shift);
-    cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
-    PrintCaesarStream(h_caesar, testIdx);
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift);
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
     printf("Caesar shifted %d \n", shift);
@@ -139,6 +136,10 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     cudaMallocHost(&d_a, N*sizeof(int));    
     cudaMallocHost(&d_b, N*sizeof(int));    
     cudaMallocHost(&d_c, N*sizeof(int));    
+    
+    cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
 
     // setup data for prveious kernels
     gen_data<<<numBlocks, blockSize>>>(d_a);
@@ -189,6 +190,10 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     cudaMalloc(&d_a, N*sizeof(int));    
     cudaMalloc(&d_b, N*sizeof(int));    
     cudaMalloc(&d_c, N*sizeof(int));    
+
+    cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
 
     // setup data for prveious kernels
     gen_data<<<numBlocks, blockSize>>>(d_a);
