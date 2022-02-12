@@ -4,7 +4,7 @@ BEGIN {
     curr=0;
 }
 
-/command: \.\/prog1 / {
+/command: \.\/assignment.exe / {
     ++curr
     p1[curr]=$9
     p2[curr]=$10
