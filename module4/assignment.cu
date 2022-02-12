@@ -72,6 +72,7 @@ void print_result(int* arr, int N, char opt){
 void RunGpuAdd(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
                int* d_c, int* h_c){
 
+    printf("numBlocks: %d, blockSize %d, N: %d", numBlocks, blockSize, N);
     gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
     cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(h_c, N, '+');
@@ -175,12 +176,12 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar); 
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift);
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
-    printf("Caesar shifted\n");
+    printf("Caesar shifted %d\n", shift);
     PrintCaesarStream(h_caesar, testIdx);
 
     CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, 26-shift); 
     cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
-    printf("Caesar shifted back to original\n");
+    printf("Caesar shifted back to original with %d\n", 26-shift);
     PrintCaesarStream(h_caesar, testIdx);
 
     cudaFree(d_caesar);
@@ -198,6 +199,7 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     // setup data for prveious kernels
     gen_data<<<numBlocks, blockSize>>>(d_a);
     gen_data<<<numBlocks, blockSize>>>(d_b);
+    cudaDeviceSynchronize();
     RunGpuAdd(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuSub(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
