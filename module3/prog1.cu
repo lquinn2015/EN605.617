@@ -118,29 +118,35 @@ int main(int argc, char** argv)
     // generate inputs on GPU because they are going to be used there
     gen_data<<<numBlocks, threadsPerBlock>>>(dev_a);
     gen_data<<<numBlocks, threadsPerBlock>>>(dev_b);
+    cudaDeviceSynchronize();
    
     // test addition
     gpu_add<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
+    cudaDeviceSynchronize();
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);    
     print_result(c, N, '+'); 
 
     // test subtraction
     gpu_sub<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
+    cudaDeviceSynchronize();
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '-'); 
 
     // test multiplication
     gpu_mult<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
+    cudaDeviceSynchronize();
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '*'); 
     
     // test modulus
     gpu_mod<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
+    cudaDeviceSynchronize();
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(c, N, '%'); 
    
     // test conditionals
     gpu_mixed<<<numBlocks, threadsPerBlock>>>(dev_a,dev_b,dev_c);
+    cudaDeviceSynchronize();
     cudaMemcpy(c, dev_c, N*sizeof(int), cudaMemcpyDeviceToHost);    
     print_result(c, N, '?'); 
 
