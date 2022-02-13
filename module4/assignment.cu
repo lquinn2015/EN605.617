@@ -90,27 +90,27 @@ void RunGpuAdd(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
                int* d_c, int* h_c){
 
     //printf("numBlocks: %d, blockSize %d, N: %d\n", numBlocks, blockSize, N);
-    checkCudaKernel( (gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c)) );
+    checkCudaKernel( (gpu_add<<<numBlocks, blockSize>>>(d_a, d_b, d_c)) );
     checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '+');
 
 }
 void RunGpuSub(int N, int numBlocks, int blockSize, int* d_a, int* d_b, 
                int* d_c, int* h_c){
-    gpu_sub<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
-    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    checkCudaKernel( (gpu_sub<<<numBlocks, blockSize>>>(d_a, d_b, d_c)) );
+    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '-');
 }
 void RunGpuMult(int N, int numBlocks, int blockSize, int* d_a, int* d_b, 
                 int* d_c, int* h_c){
-    gpu_mult<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
-    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    checkCudaKernel( (gpu_mult<<<numBlocks, blockSize>>>(d_a, d_b, d_c)) );
+    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '*');
 }
 void RunGpuMod(int N, int numBlocks, int blockSize, int* d_a, int* d_b, 
                int* d_c, int* h_c){
-    gpu_mod<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
-    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    checkCudaKernel( (gpu_mod<<<numBlocks, blockSize>>>(d_a, d_b, d_c)) );
+    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '%');
 }
 
@@ -153,7 +153,8 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     // Setup to exec the previous Kernels 
     checkCuda( cudaMallocHost(&d_a, N*sizeof(int)) );
     checkCuda( cudaMallocHost(&d_b, N*sizeof(int)) );    
-    checkCuda( cudaMallocHost(&d_c, N*sizeof(int)) );     
+    checkCuda( cudaMallocHost(&d_c, N*sizeof(int)) );
+    
     checkCuda( cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
@@ -166,9 +167,9 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMod(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
    
-    cudaFreeHost(d_a);
-    cudaFreeHost(d_b);
-    cudaFreeHost(d_c);
+    checkCuda( cudaFreeHost(d_a) );
+    checkCuda( cudaFreeHost(d_b) );
+    checkCuda( cudaFreeHost(d_c) );
     free(h_c);
 
 }
@@ -183,34 +184,33 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
 
     h_caesar = (char*) malloc(N*sizeof(char));
 
-    cudaMalloc(&d_caesar, N*sizeof(char));
+    checkCuda( cudaMalloc(&d_caesar, N*sizeof(char)) );
 
     // Execute Caesar Shifts first
     int testIdx = rand() % (N-26);
 
-    InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar); 
-    CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift);
-    cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
+    checkCudaKernel( (InitAlpha<<<numBlocks, blockSize>>>(N, d_caesar)) ); 
+    checkCudaKernel( (CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, shift)) );
+    checkCuda( cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost) );
     printf("Caesar shifted %d\n", shift);
     PrintCaesarStream(h_caesar, testIdx);
 
-    CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, 26-shift); 
-    cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost);
+    checkCudaKernel( (CaesarShift<<<numBlocks, blockSize>>>(N, d_caesar, 26-shift)) ); 
+    checkCuda( cudaMemcpy(h_caesar, d_caesar, N*sizeof(char), cudaMemcpyDeviceToHost) );
     printf("Caesar shifted back to original with %d\n", 26-shift);
     PrintCaesarStream(h_caesar, testIdx);
 
-    cudaFree(d_caesar);
+    checkCuda( cudaFree(d_caesar) );
     free(h_caesar);     
 
     // Setup to exec the previous Kernels 
     h_c = (int*) malloc(N*sizeof(int));
-    cudaMalloc(&d_a, N*sizeof(int));    
-    cudaMalloc(&d_b, N*sizeof(int));    
-    cudaMalloc(&d_c, N*sizeof(int));    
-
-    cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);    
+    checkCuda( cudaMalloc(&d_a, N*sizeof(int)) );
+    checkCuda( cudaMalloc(&d_b, N*sizeof(int)) );    
+    checkCuda( cudaMalloc(&d_c, N*sizeof(int)) );    
+    checkCuda( cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
+    checkCuda( cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
+    checkCuda( cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );    
 
     // setup data for prveious kernels
     checkCudaKernel( (gen_data<<<numBlocks, blockSize>>>(d_a)) );
@@ -226,16 +226,15 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMod(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
    
-    cudaFree(d_a);
-    cudaFree(d_b);
-    cudaFree(d_c);
+    checkCuda( cudaFree(d_a) );
+    checkCuda( cudaFree(d_b) );
+    checkCuda( cudaFree(d_c) );
     free(h_c);
     
  
 }
 
 
-///////////////////// Pagged Memory section end  ///////////////////////////////
 
 int main(int argc, char** argv)
 {
