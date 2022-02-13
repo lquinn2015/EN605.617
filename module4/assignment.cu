@@ -4,6 +4,20 @@
 #include <time.h>
 
 
+
+// Error checker
+inline cudaError_t checkCuda(cudaError_t result)
+{
+#if defined(DEBUG) || defined(_DEBUG)
+  if (result != cudaSuccess) {
+    fprintf(stderr, "CUDA Runtime Error: %s\n", 
+            cudaGetErrorString(result));
+    assert(result == cudaSuccess);
+  }
+#endif
+  return result;
+}
+
 // previous kernels
 
 // kernel for intializing data quickly
@@ -74,7 +88,8 @@ void RunGpuAdd(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
 
     //printf("numBlocks: %d, blockSize %d, N: %d\n", numBlocks, blockSize, N);
     gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
-    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    checkCuda(cudaPeekAtLastError());
+    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '+');
 
 }
@@ -194,14 +209,18 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
 
     cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);    
 
     // setup data for prveious kernels
     gen_data<<<numBlocks, blockSize>>>(d_a);
+    checkCuda( cudaPeekAtLastError());
     gen_data<<<numBlocks, blockSize>>>(d_b);
+    checkCuda( cudaPeekAtLastError());
     
     gpu_add<<<numBlocks, blockSize>>>(d_a,d_b,d_c);
-    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    checkCuda( cudaPeekAtLastError());
+    
+    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '+');
     
     RunGpuAdd(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
