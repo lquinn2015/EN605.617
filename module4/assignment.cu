@@ -72,7 +72,7 @@ void print_result(int* arr, int N, char opt){
 void RunGpuAdd(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
                int* d_c, int* h_c){
 
-    printf("numBlocks: %d, blockSize %d, N: %d", numBlocks, blockSize, N);
+    //printf("numBlocks: %d, blockSize %d, N: %d\n", numBlocks, blockSize, N);
     gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
     cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
     print_result(h_c, N, '+');
@@ -165,7 +165,6 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     int* d_a, *d_b, *d_c, *h_c;
     char* d_caesar, *h_caesar;
 
-    h_c = (int*) malloc(N*sizeof(int));
     h_caesar = (char*) malloc(N*sizeof(char));
 
     cudaMalloc(&d_caesar, N*sizeof(char));
@@ -188,6 +187,7 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     free(h_caesar);     
 
     // Setup to exec the previous Kernels 
+    h_c = (int*) malloc(N*sizeof(int));
     cudaMalloc(&d_a, N*sizeof(int));    
     cudaMalloc(&d_b, N*sizeof(int));    
     cudaMalloc(&d_c, N*sizeof(int));    
@@ -199,7 +199,11 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     // setup data for prveious kernels
     gen_data<<<numBlocks, blockSize>>>(d_a);
     gen_data<<<numBlocks, blockSize>>>(d_b);
-    cudaDeviceSynchronize();
+    
+    gpu_add<<<numBlocks, blockSize>>>(d_a,d_b,d_c);
+    cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+    print_result(h_c, N, '+');
+    
     RunGpuAdd(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuSub(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
