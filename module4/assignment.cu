@@ -208,6 +208,7 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     checkCuda( cudaMalloc(&d_a, N*sizeof(int)) );
     checkCuda( cudaMalloc(&d_b, N*sizeof(int)) );    
     checkCuda( cudaMalloc(&d_c, N*sizeof(int)) );    
+
     checkCuda( cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );    
@@ -215,11 +216,6 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     // setup data for prveious kernels
     checkCudaKernel( (gen_data<<<numBlocks, blockSize>>>(d_a)) );
     checkCudaKernel( (gen_data<<<numBlocks, blockSize>>>(d_b)) );
-    
-    checkCudaKernel( (gpu_add<<<numBlocks, blockSize>>>(d_a,d_b,d_c)) );
-    
-    checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
-    print_result(h_c, N, '+');
     
     RunGpuAdd(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuSub(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
