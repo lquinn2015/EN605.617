@@ -2,19 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
 
 
+#define checkCudaKernel(x) do { \
+        (x); \
+        checkCuda( cudaPeekAtLastError() ); \
+    } while(0)
 
 // Error checker
 inline cudaError_t checkCuda(cudaError_t result)
 {
-#if defined(DEBUG) || defined(_DEBUG)
   if (result != cudaSuccess) {
     fprintf(stderr, "CUDA Runtime Error: %s\n", 
             cudaGetErrorString(result));
     assert(result == cudaSuccess);
   }
-#endif
   return result;
 }
 
@@ -87,8 +90,7 @@ void RunGpuAdd(int N, int numBlocks, int blockSize, int* d_a, int* d_b,
                int* d_c, int* h_c){
 
     //printf("numBlocks: %d, blockSize %d, N: %d\n", numBlocks, blockSize, N);
-    gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c);
-    checkCuda(cudaPeekAtLastError());
+    checkCudaKernel( (gpu_add<<<numBlocks, numBlocks>>>(d_a, d_b, d_c)) );
     checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '+');
 
@@ -212,13 +214,10 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice);    
 
     // setup data for prveious kernels
-    gen_data<<<numBlocks, blockSize>>>(d_a);
-    checkCuda( cudaPeekAtLastError());
-    gen_data<<<numBlocks, blockSize>>>(d_b);
-    checkCuda( cudaPeekAtLastError());
+    checkCudaKernel( (gen_data<<<numBlocks, blockSize>>>(d_a)) );
+    checkCudaKernel( (gen_data<<<numBlocks, blockSize>>>(d_b)) );
     
-    gpu_add<<<numBlocks, blockSize>>>(d_a,d_b,d_c);
-    checkCuda( cudaPeekAtLastError());
+    checkCudaKernel( (gpu_add<<<numBlocks, blockSize>>>(d_a,d_b,d_c)) );
     
     checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost) );
     print_result(h_c, N, '+');
