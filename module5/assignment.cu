@@ -35,53 +35,63 @@ inline cudaError_t checkCuda(cudaError_t result)
 }
 
 
+// general structure all device functions were formally kernels
+// they have a global c var which always writes back to global mem
+// however they have a sid value which represents a shared mem id 
+// if they have a shared mem its transparent if not tid == sid
+// and no change happens
 
-__device__ void gpu_scramble_literal(const int tid, int *a, int *b, int *c){
+// As a note sid -> something could be shared mem if you want
+//      and as such can right or left operands 
+//      but one uses a tid in the right hand they will crash
+
+
+__device__ void gpu_scramble_literal(const int tid, const int sid, int *a, int *b, int *c){
 
 
     uint32_t v = 0;
     for(int i = 0; i < NUM_ROUNDS; i++) {
-        v ^= ((a[tid] ^ (b[tid]*3)) & 0xF0F0F0F0) >> 3;
-        v ^= ((a[tid] ^ (b[tid]*3)) & 0xF0F0F0F0) << 5;
-        v ^= ((a[tid] ^ (b[tid]*3)) & 0xF0F0F0F0) >> 3;
-        v ^= ((a[tid] ^ (b[tid]*3)) & 0xF0F0F0F0) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) << 5;
         v ^= 0x80000001;
     }
     c[tid] = v;
 }
 
-__device__ void gpu_scramble_const(const int tid, int *a, int *b, int *c){
+__device__ void gpu_scramble_const(const int tid, const int sid,  int *a, int *b, int *c){
     
     uint32_t v = 0;
     for(int i = 0; i < NUM_ROUNDS; i++) {
-        v ^= ((a[tid] ^ (b[tid]*3)) & const_M1) >> 3;
-        v ^= ((a[tid] ^ (b[tid]*3)) & const_M2) << 5;
-        v ^= ((a[tid] ^ (b[tid]*3)) & const_M3) >> 3;
-        v ^= ((a[tid] ^ (b[tid]*3)) & const_M4) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) & const_M1) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) & const_M2) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) & const_M3) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) & const_M4) << 5;
         v ^= const_M5;
     }
     c[tid] = v;
 }
 
 
-__device__ void gpu_add(const int tid, int* a, int* b, int*c)
+__device__ void gpu_add(const int tid, const int sid, int* a, int* b, int*c)
 {
-    c[tid] = a[tid] + b[tid];
+    c[tid] = a[sid] + b[sid];
 }
 
-__device__ void gpu_sub(const int tid, int* a, int* b, int*c)
+__device__ void gpu_sub(const int tid, const int sid, int* a, int* b, int*c)
 {
-    c[tid] = a[tid] - b[tid];
+    c[tid] = a[sid] - b[sid];
 }
 
-__device__ void gpu_mult(const int tid, int* a, int* b, int*c)
+__device__ void gpu_mult(const int tid, const int sid, int* a, int* b, int*c)
 {
-    c[tid] = a[tid] * b[tid];
+    c[tid] = a[sid] * b[sid];
 }
 
-__device__ void gpu_mod(const int tid, int* a, int* b, int*c)
+__device__ void gpu_mod(const int tid, const int sid, int* a, int* b, int*c)
 {
-    c[tid] = a[tid] % b[tid];
+    c[tid] = a[sid] % b[sid];
 }
 
 __global__ void MultiMemKern(int mode, int *d_a, int *d_b, int *d_k1, int *d_k2, int *d_k3, int *d_k4){
@@ -89,36 +99,38 @@ __global__ void MultiMemKern(int mode, int *d_a, int *d_b, int *d_k1, int *d_k2,
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     extern __shared__ int shmem[];
 
+    uint32_t sid = tid % blockDim.x;
+    
     switch(mode) {
 
         case 0: {// global
             d_a[tid] = tid;
             d_b[tid] = tid;
-            gpu_add(tid, d_a, d_b, d_k1);
-            gpu_sub(tid, d_a, d_b, d_k2);
-            gpu_mult(tid, d_a, d_b, d_k3);
-            gpu_mod(tid, d_a, d_b, d_k4);
+            gpu_add (tid, tid, d_a, d_b, d_k1);
+            gpu_sub (tid, tid, d_a, d_b, d_k2);
+            gpu_mult(tid, tid, d_a, d_b, d_k3);
+            gpu_mod (tid, tid, d_a, d_b, d_k4);
             break;
         }case 1: {// shared
-            shmem[tid] = tid;
-            gpu_add (tid, shmem, shmem, d_k1);
-            gpu_sub (tid, shmem, shmem, d_k2);
-            gpu_mult(tid, shmem, shmem, d_k3);
-            gpu_mod (tid, shmem, shmem, d_k4);
+            shmem[sid] = tid;
+            gpu_add (tid, sid, shmem, shmem, d_k1);
+            gpu_sub (tid, sid, shmem, shmem, d_k2);
+            gpu_mult(tid, sid, shmem, shmem, d_k3);
+            gpu_mod (tid, sid, shmem, shmem, d_k4);
             break;
         } case 2: {// constant
             d_a[tid] = tid;
             d_b[tid] = tid;
-            gpu_scramble_literal(tid, d_a, d_b, d_k1);
+            gpu_scramble_literal(tid, tid, d_a, d_b, d_k1);
             break;
         } case 3: {// literals
             d_a[tid] = tid;
             d_b[tid] = tid;
-            gpu_scramble_const(tid, d_a, d_b, d_k1);
+            gpu_scramble_const(tid, tid, d_a, d_b, d_k1);
             break;
         } case 4: { // constants and shmem
             shmem[tid] = tid;
-            gpu_scramble_const(tid, shmem, shmem, d_k1);
+            gpu_scramble_const(tid, sid, shmem, shmem, d_k1);
             break;
         }
     }
