@@ -5,7 +5,7 @@
 #define NUM_ROUNDS 30
 #define NUM_OF_OPTS 4
 #define NUM_OF_MODES 5
-char gMode2Str[NUM_OF_MODES][30] = {"Shared", "global", "constant", "literal", "Constant and shmem"};
+char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "constant", "literal", "Constant and shmem"};
 char gOpt2Char[NUM_OF_OPTS] = {'+', '-', '*', '%'};
 
 typedef unsigned int uint32_t;
