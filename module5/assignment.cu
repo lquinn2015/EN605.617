@@ -100,6 +100,7 @@ __global__ void MultiMemKern(int mode, int *d_a, int *d_b, int *d_k1, int *d_k2,
     extern __shared__ int shmem[];
 
     uint32_t sid = tid % blockDim.x;
+
     
     switch(mode) {
 
@@ -129,7 +130,7 @@ __global__ void MultiMemKern(int mode, int *d_a, int *d_b, int *d_k1, int *d_k2,
             gpu_scramble_const(tid, tid, d_a, d_b, d_k1);
             break;
         } case 4: { // constants and shmem
-            shmem[tid] = tid;
+            shmem[sid] = tid;
             gpu_scramble_const(tid, sid, shmem, shmem, d_k1);
             break;
         }
