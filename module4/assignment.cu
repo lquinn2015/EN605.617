@@ -138,6 +138,7 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift,
     checkCuda( cudaMallocHost(&d_b, N*sizeof(int)) );    
     checkCuda( cudaMallocHost(&d_c, N*sizeof(int)) );
 
+    printf("Allocation complete\n");
     checkCuda( cudaEventRecord(*start, 0) );
 
     // Execute Caesar Shifts first
@@ -196,6 +197,7 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift,
     checkCuda( cudaMalloc(&d_b, N*sizeof(int)) );    
     checkCuda( cudaMalloc(&d_c, N*sizeof(int)) );    
 
+    printf("Allocation complete\n");
     checkCuda( cudaEventRecord(*start, 0) );
 
     // Execute Caesar Shifts first
