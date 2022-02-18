@@ -122,7 +122,8 @@ void PrintCaesarStream(char* h_caesar, int testIdx){
     printf("\n");
 }
 
-void PinnedMem(int N, int numBlocks, int blockSize, int shift){
+void PinnedMem(int N, int numBlocks, int blockSize, int shift, 
+        cudaEvent_t* start, cudaEvent_t* stop ){
     
     // Setup a ton of Pinned memory
     int* d_a, *d_b, *d_c, *h_c;
@@ -132,6 +133,12 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     h_caesar = (char*) malloc(N*sizeof(char));
 
     checkCuda( cudaMallocHost(&d_caesar, N*sizeof(char)) );
+    // Setup to exec the previous Kernels 
+    checkCuda( cudaMallocHost(&d_a, N*sizeof(int)) );
+    checkCuda( cudaMallocHost(&d_b, N*sizeof(int)) );    
+    checkCuda( cudaMallocHost(&d_c, N*sizeof(int)) );
+
+    checkCuda( cudaEventRecord(*start, 0) );
 
     // Execute Caesar Shifts first
     int testIdx = rand() % (N-26);
@@ -147,14 +154,6 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     printf("Caesar shifted back to original by %d \n", 26-shift);
     PrintCaesarStream(h_caesar, testIdx);
 
-    checkCuda( cudaFreeHost(d_caesar) );
-    free(h_caesar);
-
-    // Setup to exec the previous Kernels 
-    checkCuda( cudaMallocHost(&d_a, N*sizeof(int)) );
-    checkCuda( cudaMallocHost(&d_b, N*sizeof(int)) );    
-    checkCuda( cudaMallocHost(&d_c, N*sizeof(int)) );
-    
     checkCuda( cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
@@ -167,6 +166,11 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMod(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
    
+    checkCuda( cudaEventRecord(*stop, 0) );
+
+    checkCuda( cudaFreeHost(d_caesar) );
+    free(h_caesar);
+    
     checkCuda( cudaFreeHost(d_a) );
     checkCuda( cudaFreeHost(d_b) );
     checkCuda( cudaFreeHost(d_c) );
@@ -176,15 +180,23 @@ void PinnedMem(int N, int numBlocks, int blockSize, int shift){
 
 
 // Setup pagged memory than run the Caesar shift function twice
-void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
+void PaggedMem(int N, int numBlocks, int blockSize, int shift,
+        cudaEvent_t* start, cudaEvent_t* stop ){
 
     // Setup a ton of pagged memory for use
     int* d_a, *d_b, *d_c, *h_c;
     char* d_caesar, *h_caesar;
 
     h_caesar = (char*) malloc(N*sizeof(char));
-
     checkCuda( cudaMalloc(&d_caesar, N*sizeof(char)) );
+    
+    // Setup to exec the previous Kernels 
+    h_c = (int*) malloc(N*sizeof(int));
+    checkCuda( cudaMalloc(&d_a, N*sizeof(int)) );
+    checkCuda( cudaMalloc(&d_b, N*sizeof(int)) );    
+    checkCuda( cudaMalloc(&d_c, N*sizeof(int)) );    
+
+    checkCuda( cudaEventRecord(*start, 0) );
 
     // Execute Caesar Shifts first
     int testIdx = rand() % (N-26);
@@ -200,15 +212,6 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     printf("Caesar shifted back to original with %d\n", 26-shift);
     PrintCaesarStream(h_caesar, testIdx);
 
-    checkCuda( cudaFree(d_caesar) );
-    free(h_caesar);     
-
-    // Setup to exec the previous Kernels 
-    h_c = (int*) malloc(N*sizeof(int));
-    checkCuda( cudaMalloc(&d_a, N*sizeof(int)) );
-    checkCuda( cudaMalloc(&d_b, N*sizeof(int)) );    
-    checkCuda( cudaMalloc(&d_c, N*sizeof(int)) );    
-
     checkCuda( cudaMemcpy(d_a, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_b, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );
     checkCuda( cudaMemcpy(d_c, h_c, N*sizeof(int), cudaMemcpyHostToDevice) );    
@@ -222,6 +225,11 @@ void PaggedMem(int N, int numBlocks, int blockSize, int shift) {
     RunGpuMult(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
     RunGpuMod(N, numBlocks, blockSize, d_a, d_b, d_c, h_c);
    
+    checkCuda( cudaEventRecord(*stop, 0) );
+
+    checkCuda( cudaFree(d_caesar) );
+    free(h_caesar);     
+    
     checkCuda( cudaFree(d_a) );
     checkCuda( cudaFree(d_b) );
     checkCuda( cudaFree(d_c) );
@@ -277,27 +285,31 @@ int main(int argc, char** argv)
     printf("Problem Size: %d, with grid of (%d,%d)\n", N, numBlocks, blockSize);
 
     float time;
-    cudaEvent_t start, stop;
+    cudaEvent_t start, stop, pev1, pev2;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
 
     // profile using Pinned Memory
     cudaEventRecord(start, 0);    
-    PinnedMem(N, numBlocks, blockSize, shift);
+    PinnedMem(N, numBlocks, blockSize, shift, &pev1, &pev2);
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
     printf("Executing with Pinned memory took %f \n", time);
+    cudaEventElapsedTime(&time, pev1, pev2);
+    printf("Pinned memory speed without allocs included %f \n", time);
    
 
     // profile using Page memory only
     cudaEventRecord(start, 0);    
-    PaggedMem(N, numBlocks, blockSize, shift);
+    PaggedMem(N, numBlocks, blockSize, shift, &pev1, &pev2);
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
     printf("Executing with pagged memory took %f \n", time);
+    cudaEventElapsedTime(&time, pev1, pev2);
+    printf("Pinned memory speed without allocs included %f \n", time);
 
 
 }
