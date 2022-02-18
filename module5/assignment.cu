@@ -197,6 +197,7 @@ int main(int argc, char** argv)
     for(int mode = 0; mode<NUM_OF_MODES; mode++) {
 
         checkCuda( cudaEventRecord(start, 0) );
+        printf("Launching kernel with %s mode\n", gMode2Str[mode] );
         checkCudaKernel(( 
             MultiMemKern<<<numBlocks, blockSize, shmem_size>>>(mode, d_a, d_b, 
                                                                d_k1, d_k2, d_k3, d_k4) 
