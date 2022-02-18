@@ -162,8 +162,8 @@ int main(int argc, char** argv)
 	}
     
     int shmem_size = blockSize*sizeof(int);
-    if (blockSize > 1024 ) {
-        printf("Canceling run block size to big for memory requirements");
+    if (shmem_size > 48 * (2<<10) ) {
+        printf("Canceling run block size to big for memory requirements\n");
         return -1;
     }
     
