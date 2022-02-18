@@ -290,7 +290,8 @@ int main(int argc, char** argv)
     cudaEvent_t start, stop, pev1, pev2;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
-
+    cudaEventCreate(&pev1);
+    cudaEventCreate(&pev2);
 
     // profile using Pinned Memory
     cudaEventRecord(start, 0);    
@@ -299,6 +300,7 @@ int main(int argc, char** argv)
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
     printf("Executing with Pinned memory took %f \n", time);
+    cudaEventSynchronize(pev2);
     cudaEventElapsedTime(&time, pev1, pev2);
     printf("Pinned memory speed without allocs included %f \n", time);
    
@@ -310,6 +312,7 @@ int main(int argc, char** argv)
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&time, start, stop);
     printf("Executing with pagged memory took %f \n", time);
+    cudaEventSynchronize(pev2);
     cudaEventElapsedTime(&time, pev1, pev2);
     printf("Pinned memory speed without allocs included %f \n", time);
 
