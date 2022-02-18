@@ -1,0 +1,25 @@
+Cuda Device Tesla K80
+Problem Size: 1048576, with grid of (4096,256)
+Allocation complete
+Caesar shifted 5 
+Caesar result at idx 392259 is : cdefghijklmnopqrstuvwxyzab
+Caesar shifted back to original by 21 
+Caesar result at idx 392259 is : xyzabcdefghijklmnopqrstuvw
++ operation result c[519219]=1038438
+- operation result c[305414]=0
+* operation result c[211103]=1614803649
+% operation result c[1001708]=0
+Executing with Pinned memory took 21.224031 
+Pinned memory speed without allocs included 11.836512 
+Allocation complete
+Caesar shifted 5
+Caesar result at idx 198811 is : uvwxyzabcdefghijklmnopqrst
+Caesar shifted back to original with 21
+Caesar result at idx 198811 is : pqrstuvwxyzabcdefghijklmno
++ operation result c[880227]=1760454
+- operation result c[112737]=0
+* operation result c[817338]=-1973491932
+% operation result c[333684]=0
+Executing with pagged memory took 11.147040 
+Pinned memory speed without allocs included 9.043776 
+
