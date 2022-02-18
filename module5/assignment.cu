@@ -51,10 +51,10 @@ __device__ void gpu_scramble_literal(const int tid, const int sid, int *a, int *
 
     uint32_t v = 0;
     for(int i = 0; i < NUM_ROUNDS; i++) {
-        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) >> 3;
-        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) << 5;
-        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) >> 3;
-        v ^= ((a[sid] ^ (b[sid]*3)) & 0xF0F0F0F0) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) | 0xF0F0F0F0) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) | 0xF0F0F0F0) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) | 0xF0F0F0F0) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) | 0xF0F0F0F0) << 5;
         v ^= 0x80000001;
     }
     c[tid] = v;
@@ -64,10 +64,10 @@ __device__ void gpu_scramble_const(const int tid, const int sid,  int *a, int *b
     
     uint32_t v = 0;
     for(int i = 0; i < NUM_ROUNDS; i++) {
-        v ^= ((a[sid] ^ (b[sid]*3)) & const_M1) >> 3;
-        v ^= ((a[sid] ^ (b[sid]*3)) & const_M2) << 5;
-        v ^= ((a[sid] ^ (b[sid]*3)) & const_M3) >> 3;
-        v ^= ((a[sid] ^ (b[sid]*3)) & const_M4) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M1) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M2) << 5;
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M3) >> 3;
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M4) << 5;
         v ^= const_M5;
     }
     c[tid] = v;
