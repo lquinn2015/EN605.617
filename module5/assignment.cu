@@ -87,9 +87,7 @@ __device__ void gpu_mod(const int tid, int* a, int* b, int*c)
 __global__ void MultiMemKern(int mode, int *d_a, int *d_b, int *d_k1, int *d_k2, int *d_k3, int *d_k4){
 
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    extern __shared__ char array[];
-    int * shmem = (int*)array;
-
+    extern __shared__ int shmem[];
 
     switch(mode) {
 
