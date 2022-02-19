@@ -6,7 +6,7 @@ BEGIN {
 
 /Problem Size:/ {
     ++curr
-    wsize[curr]=$9
+    wsize[curr]=$10
     blksize[curr]=$3
 }
 
