@@ -5,7 +5,7 @@
 #define NUM_ROUNDS 30
 #define NUM_OF_OPTS 4
 #define NUM_OF_MODES 5
-char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "constant", "literal", "Constant and shmem"};
+char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "literal", "constant", "Constant and shmem"};
 char gOpt2Char[NUM_OF_OPTS] = {'+', '-', '*', '%'};
 
 typedef unsigned int uint32_t;
@@ -231,12 +231,12 @@ int main(int argc, char** argv)
 
 
     free(h_c);
-    checkCuda( cudaFree(&d_a ) );
-    checkCuda( cudaFree(&d_b ) );
-    checkCuda( cudaFree(&d_k1) );
-    checkCuda( cudaFree(&d_k2) );
-    checkCuda( cudaFree(&d_k3) );
-    checkCuda( cudaFree(&d_k4) );
+    checkCuda( cudaFree(d_a ) );
+    checkCuda( cudaFree(d_b ) );
+    checkCuda( cudaFree(d_k1) );
+    checkCuda( cudaFree(d_k2) );
+    checkCuda( cudaFree(d_k3) );
+    checkCuda( cudaFree(d_k4) );
 
 
 
