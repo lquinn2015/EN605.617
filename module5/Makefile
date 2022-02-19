@@ -7,4 +7,4 @@ all: assignment.cu
 	./assignment.exe 1048576 256  >> results 
 	./assignment.exe 1048576 512  >> results 
 	./assignment.exe 1048576 1024 >> results 
-	./report2csv.awk > report.csv
+	./report2csv.awk results > report.csv
