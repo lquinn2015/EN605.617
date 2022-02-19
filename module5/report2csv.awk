@@ -6,8 +6,8 @@ BEGIN {
 
 /Problem Size:/ {
     ++curr
-    wsize[curr]=$10
-    blksize[curr]=$3
+    wsize[curr]=$3
+    blksize[curr]=$10
 }
 
 / shmem mem mode/ {
