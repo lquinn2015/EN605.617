@@ -183,7 +183,7 @@ int main(int argc, char** argv)
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
     printf("Cuda Device %s\n", prop.name);
-    printf("Problem Size: %d, with grid of ( %d , %d )\n", N, numBlocks, blockSize);
+    printf("Problem Size: %d with grid of ( %d , %d )\n", N, numBlocks, blockSize);
 
     cudaEvent_t start,stop;
     checkCuda( cudaEventCreate(&start) );
