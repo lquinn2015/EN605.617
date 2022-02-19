@@ -10,7 +10,7 @@ BEGIN {
     blksize[curr]=$3
 }
 
-/shmem mem mode/ {
+/ shmem mem mode/ {
     shmem[curr]=$2
     shmemt[curr]=$6
 }
@@ -37,7 +37,7 @@ END {
     {print "workSize, blocksize, gmem, shmem, lmem, cmem, con_shmem"}
     for(i = 1; i < curr+1; i++){
         
-        {print wsize[i] "," blksize[i] "," gmem[i] "," shmem[i] "," lmem[i] "," cmem[i] "," csmem[i] }
+        {print wsize[i] "," blksize[i] "," gmemt[i] "," shmemt[i] "," lmemt[i] "," cmemt[i] "," csmemt[i] }
     }
 
 }
