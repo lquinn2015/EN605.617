@@ -2,7 +2,7 @@
 #include <assert.h>
 
 
-#define NUM_ROUNDS 1
+#define NUM_ROUNDS 5
 #define NUM_OF_OPTS 4
 #define NUM_OF_MODES 5
 char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "literal", "constant", "Constant and shmem"};
