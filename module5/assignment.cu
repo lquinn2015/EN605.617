@@ -5,7 +5,7 @@
 #define NUM_ROUNDS 5
 #define NUM_OF_OPTS 4
 #define NUM_OF_MODES 5
-char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "literal", "constant", "Constant and shmem"};
+char gMode2Str[NUM_OF_MODES][30] = {"global", "shmem", "literal", "constant", "Constant_and_shmem"};
 char gOpt2Char[NUM_OF_OPTS] = {'+', '-', '*', '%'};
 
 typedef unsigned int uint32_t;
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
     printf("Cuda Device %s\n", prop.name);
-    printf("Problem Size: %d, with grid of (%d,%d)\n", N, numBlocks, blockSize);
+    printf("Problem Size: %d, with grid of ( %d , %d )\n", N, numBlocks, blockSize);
 
     cudaEvent_t start,stop;
     checkCuda( cudaEventCreate(&start) );
