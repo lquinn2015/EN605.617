@@ -93,18 +93,25 @@ __global__ void MultKernel(uint32_t *a, uint32_t *b, uint32_t *c, int mode){
 void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmemcpy){
 
     int tid = rand() % N;
+    uint32_t ltid = tid %256;
     printf("Timing of  %s prememcpy: %f     postmemcpy: %f \n", KMODE[mode], 
             prememcpy, postmemcpy);
     if(mode == 0 || mode == 1) {
-        uint32_t add = ((h_d[tid] >> 0x18) & 0xff);
-        uint32_t sub = ((h_d[tid] >> 0x10) & 0xff);
-        uint32_t mul = ((h_d[tid] >> 0x08) & 0xff);
-        uint32_t mod = ((h_d[tid] >> 0x00) & 0xff);
-        printf("Tid = %d mod 256 = %d \n", tid, (tid%256));
-        printf("    %d + %d = %d \n",tid, tid, add);
-        printf("    %d + %d = %d \n",tid, tid, sub);
-        printf("    %d + %d = %d \n",tid, tid, mul);
-        printf("    %d + %d = %d \n",tid, tid, mod);
+        tid *= 4; // get to c space since cspace 4x the size of tid space
+        uint32_t add = h_d[tid+0];
+        uint32_t sub = h_d[tid+1];
+        uint32_t mul = h_d[tid+2];
+        uint32_t mod = h_d[tid+3];
+        printf("Tid = %d mod 256 = %d \n", tid, ltid);
+        printf("    %d + %d = %d \n",ltid, ltid, add);
+        printf("    %d - %d = %d \n",ltid, ltid, sub);
+        printf("    %d * %d = %d \n",ltid, ltid, mul);
+        printf("    %d m %d = %d \n",ltid, ltid, mod);
+    } else {
+        uint32_t res = h_d[tid];
+        printf("Tid = %d mod 256 = %d \n", tid, ltid);
+        printf("    FMUL(%02x, %02x) = %02x", ltid, ltid, res);
+        
     }
     
 }
