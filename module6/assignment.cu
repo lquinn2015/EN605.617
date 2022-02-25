@@ -174,7 +174,6 @@ int main(int argc, char** argv)
 
         printf("Starting test %s\n", KMODE[i]);
         checkCuda( cudaEventRecord(s1, 0) );    
-        printf("Cuda Event start");
         checkCudaKernel( 
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
         );
@@ -185,7 +184,7 @@ int main(int argc, char** argv)
         checkCuda( cudaEventSynchronize(s2) );
         checkCuda( cudaEventSynchronize(s3) );
         checkCuda( cudaEventElapsedTime(&d1, s1, s2) ); 
-        checkCuda( cudaEventElapsedTime(&d2, s2, s3) ); 
+        checkCuda( cudaEventElapsedTime(&d2, s1, s3) ); 
 
         print_result(i, h_c, N, d1, d2);
         printf("%s now finished \n", KMODE[i]);
