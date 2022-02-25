@@ -16,23 +16,29 @@ __constant__ uint32_t c_LMSB = 0x08;
 char KMODE[K2TEST][30] = {"Reg_test", "AntiReg_test", "Fmul_test"};
 
 // FIPS 197 fmul in 2^8 mod poly(1b)
-__device__ void fmul_reg(uint32_t* a, uint32_t* b, uint32_t* c){
+__device__ void fmul_reg(uint32_t* d_a, uint32_t* d_b, uint32_t* c){
 
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    uint32_t p_i = a[tid] % c_FFMASK;
-    uint32_t rb  = b[tid] % c_FFMASK;
+    uint32_t a = d_a[tid];
+    uint32_t b  = d_b[tid];
    
     uint32_t i = c_ZERO;
+    uint32_t p_i = a;
     uint32_t p_it = p_i;
     uint32_t ret = c_ZERO;
     while(i < c_EIGHT){
-        // mult
-        if( c_ONE & rb == c_ONE) ret ^= p_i;
-        rb = rb >> c_ONE;
-        // xtime p_i 
-        p_it = p_i << c_ONE;
-        if(p_i & c_HIGHMASK == c_ONE) p_it ^= c_POLY_1B;
-        p_i = p_it & c_FFMASK;
+        
+        if(b & c_ONE == c_ONE){
+            ret = ret ^ p_i;
+        }
+        // p_i = xtime(p_i);
+            p_it = p_i << c_ONE;
+            if(p_i & c_HIGHMASK != c_ZERO){
+               p_it = p_it^c_POLY_1B;
+            }
+            p_i = p_it & c_FFMASK;
+     
+        b = b >> c_ONE;
         i++;
     }
     c[tid] = ret;
@@ -110,7 +116,7 @@ void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmem
     } else {
         uint32_t res = h_d[tid];
         printf("Tid = %d mod 256 = %d \n", tid, ltid);
-        printf("    FMUL(%02x, %02x) = %02x", ltid, ltid, res);
+        printf("    FMUL(%02x, %02x) = %02x\n", ltid, ltid, res);
         
     }
     
