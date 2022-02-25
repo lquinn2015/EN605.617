@@ -94,10 +94,10 @@ void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmem
     printf("Timing of  %s prememcpy: %f     postmemcpy: %f \n", KMODE[mode], 
             prememcpy, postmemcpy);
     if(mode == 0 || mode == 1) {
-        uint8_t add = ((h_d[tid] >> 0x18) & 0xff);
-        uint8_t sub = ((h_d[tid] >> 0x10) & 0xff);
-        uint8_t mul = ((h_d[tid] >> 0x08) & 0xff);
-        uint8_t mod = ((h_d[tid] >> 0x00) & 0xff);
+        uint8_t add = (uint8_t)((h_d[tid] >> 0x18) & 0xff);
+        uint8_t sub = (uint8_t)((h_d[tid] >> 0x10) & 0xff);
+        uint8_t mul = (uint8_t)((h_d[tid] >> 0x08) & 0xff);
+        uint8_t mod = (uint8_t)((h_d[tid] >> 0x00) & 0xff);
         printf("Tid = %d mod 256 = %d \n", tid, (tid%256));
         printf("    %d + %d = %d \n",tid, tid, add);
         printf("    %d + %d = %d \n",tid, tid, sub);
