@@ -47,6 +47,7 @@ __global__ void initData(uint8_t* a, uint8_t *b){
 __device__ void regTest(uint8_t* a, uint8_t *b, uint32_t *c)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+
     uint8_t ra = (uint8_t) a[tid];
     uint8_t rb = (uint8_t) b[tid];
     uint32_t plus = (uint32_t) (ra + rb) << c_MSB;
@@ -63,10 +64,10 @@ __device__ void antiRegTest(uint8_t* a, uint8_t *b, uint32_t *c)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     c[tid] = 
-       (uint32_t) (a[tid] + b[tid]) << c_MSB  ||
-       (uint32_t) (a[tid] - b[tid]) << c_MLSB ||
-       (uint32_t) (a[tid] * b[tid]) << c_LMSB ||
-       (uint32_t) (a[tid] % b[tid]);
+       (uint32_t) ((a[tid] + b[tid]) << c_MSB  ||
+                  (a[tid] - b[tid]) << c_MLSB ||
+                  (a[tid] * b[tid]) << c_LMSB ||
+                  (a[tid] % b[tid]));
 }
 
 __global__ void MultKernel(uint8_t *a, uint8_t *b, uint32_t *c, int mode){
@@ -157,6 +158,7 @@ int main(int argc, char** argv)
 
         printf("Starting test %s\n", KMODE[i]);
         checkCuda( cudaEventRecord(s1, 0) );    
+        
         checkCudaKernel( 
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
         );
