@@ -150,8 +150,12 @@ int main(int argc, char** argv)
 
     checkCudaKernel( (initData<<<numBlocks, blockSize>>>(d_a, d_b)) );
 
+    printf("Data setup startin runs\n");
+
     float d1,d2; 
     for(int i = 0; i < K2TEST; i++) {
+
+        printf("Starting test %s\n", KMODE[i]);
         checkCuda( cudaEventRecord(s1, 0) );    
         checkCudaKernel( 
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
@@ -164,6 +168,7 @@ int main(int argc, char** argv)
         checkCuda( cudaEventElapsedTime(&d2, s2, s3) ); 
 
         print_result(i, h_c, N, d1, d2);
+        printf("%s now finished \n", KMODE[i]);
     }
  
     free(h_c); 
