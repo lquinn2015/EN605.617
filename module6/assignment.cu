@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "cuda_utils.cuh"
 
 __constant__ uint32_t c_ZERO = 0;
@@ -33,7 +34,7 @@ __device__ void fmul_reg(uint32_t* d_a, uint32_t* d_b, uint32_t* c){
         }
         // p_i = xtime(p_i);
             p_it = p_i << c_ONE;
-            if(p_i & c_HIGHMASK != c_ZERO){
+            if((p_i & c_HIGHMASK) != c_ZERO){
                p_it = p_it^c_POLY_1B;
             }
             p_i = p_it & c_FFMASK;
