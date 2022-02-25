@@ -33,6 +33,7 @@ __device__ void fmul_reg(uint8_t* a, uint8_t* b, uint32_t* c){
         p_it = p_i << c_ONE;
         if(p_i & c_HIGHMASK == c_ONE) p_it ^= c_POLY_1B;
         p_i = p_it & c_FFMASK;
+        i++;
     }
     c[tid] = ret;
 }
