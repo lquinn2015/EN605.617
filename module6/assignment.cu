@@ -98,7 +98,7 @@ void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmem
         uint8_t sub = ((h_d[tid] >> 0x10) & 0xff);
         uint8_t mul = ((h_d[tid] >> 0x08) & 0xff);
         uint8_t mod = ((h_d[tid] >> 0x00) & 0xff);
-        printf("Tid = %d \n", tid);
+        printf("Tid = %d mod 256 = %d \n", tid, (tid%256));
         printf("    %d + %d = %d \n",tid, tid, add);
         printf("    %d + %d = %d \n",tid, tid, sub);
         printf("    %d + %d = %d \n",tid, tid, mul);
