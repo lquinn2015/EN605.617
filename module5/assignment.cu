@@ -10,13 +10,7 @@ char gOpt2Char[NUM_OF_OPTS] = {'+', '-', '*', '%'};
 
 typedef unsigned int uint32_t;
 
-
-__constant__ static const uint32_t const_M1 = 0xF0F0F0F0;
-__constant__ static const uint32_t const_M2 = 0x0FF00FF0;
-__constant__ static const uint32_t const_M3 = 0xFF00FF00;
-__constant__ static const uint32_t const_M4 = 0x0000FFFF;
-__constant__ static const uint32_t const_M5 = 0x80000001;
-
+__constant__ uint32_t const_M[5];
 
 #define checkCudaKernel(x) do { \
         (x); \
@@ -64,11 +58,11 @@ __device__ void gpu_scramble_const(const int tid, const int sid,  int *a, int *b
     
     uint32_t v = 0;
     for(int i = 0; i < NUM_ROUNDS; i++) {
-        v ^= ((a[sid] ^ (b[sid]*3)) | const_M1);
-        v ^= ((a[sid] ^ (b[sid]*3)) | const_M2);
-        v ^= ((a[sid] ^ (b[sid]*3)) | const_M3);
-        v ^= ((a[sid] ^ (b[sid]*3)) | const_M4);
-        v ^= const_M5;
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M[1]);
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M[2]);
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M[3]);
+        v ^= ((a[sid] ^ (b[sid]*3)) | const_M[4]);
+        v ^= const_M[0];
     }
     c[tid] = v;
 }
@@ -146,7 +140,12 @@ void print_result(char opt, int *d_ptr, int* h_ptr, int N){
     printf("%c operation result c[%d]=%d\n", opt, test_idx, h_ptr[test_idx]);
 }
 
-
+void genRandData(uint32_t* rand_data, int sz){
+    for(int i = 0; i < sz; i++){
+        rand_data[i] = (uint32_t)rand() ;
+    }
+    
+}
 
 int main(int argc, char** argv)
 {
@@ -202,7 +201,9 @@ int main(int argc, char** argv)
     checkCuda( cudaMalloc(&d_k4, N*sizeof(int)) ); 
     
     int* h_dptr[4] = {d_k1, d_k2, d_k3, d_k4};
-
+    uint32_t rand_data[5];
+    genRandData(&rand_data[0], 5);
+    cudaMemcpyToSymbol(const_M, &rand_data, 5*sizeof(uint32_t));
     float delta;
     
     for(int mode = 0; mode<NUM_OF_MODES; mode++) {
@@ -237,7 +238,8 @@ int main(int argc, char** argv)
     checkCuda( cudaFree(d_k2) );
     checkCuda( cudaFree(d_k3) );
     checkCuda( cudaFree(d_k4) );
-
+    checkCuda( cudaEventDestroy(start)  );
+    checkCuda( cudaEventDestroy(stop)  );
 
 
 }
