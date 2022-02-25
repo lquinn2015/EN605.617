@@ -1,30 +1,30 @@
 #include <stdio.h>
 #include "cuda_utils.cuh"
 
-__constant__ uint8_t c_ZERO = 0;
-__constant__ uint8_t c_ONE = 1;
-__constant__ uint8_t c_EIGHT = 8;
-__constant__ uint8_t c_FFMASK = 0xff;
-__constant__ uint8_t c_HIGHMASK = 0x80;
-__constant__ uint8_t c_POLY_1B = 0x1b; // irreducible poly in GF(2^8)
+__constant__ uint32_t c_ZERO = 0;
+__constant__ uint32_t c_ONE = 1;
+__constant__ uint32_t c_EIGHT = 8;
+__constant__ uint32_t c_FFMASK = 0xff;
+__constant__ uint32_t c_HIGHMASK = 0x80;
+__constant__ uint32_t c_POLY_1B = 0x1b; // irreducible poly in GF(2^8)
 
-__constant__ uint8_t c_MSB  = 0x18;
-__constant__ uint8_t c_MLSB = 0x10;
-__constant__ uint8_t c_LMSB = 0x08;
+__constant__ uint32_t c_MSB  = 0x18;
+__constant__ uint32_t c_MLSB = 0x10;
+__constant__ uint32_t c_LMSB = 0x08;
 
 #define K2TEST 3
 char KMODE[K2TEST][30] = {"Reg_test", "AntiReg_test", "Fmul_test"};
 
 // FIPS 197 fmul in 2^8 mod poly(1b)
-__device__ void fmul_reg(uint8_t* a, uint8_t* b, uint32_t* c){
+__device__ void fmul_reg(uint32_t* a, uint32_t* b, uint32_t* c){
 
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    uint8_t p_i = a[tid];
-    uint8_t rb = b[tid];
+    uint32_t p_i = a[tid] % c_FFMASK;
+    uint32_t rb  = b[tid] % c_FFMASK;
    
-    uint8_t i = c_ZERO;
-    uint8_t p_it = p_i;
-    uint8_t ret = c_ZERO;
+    uint32_t i = c_ZERO;
+    uint32_t p_it = p_i;
+    uint32_t ret = c_ZERO;
     while(i < c_EIGHT){
         // mult
         if( c_ONE & rb == c_ONE) ret ^= p_i;
@@ -38,40 +38,42 @@ __device__ void fmul_reg(uint8_t* a, uint8_t* b, uint32_t* c){
     c[tid] = ret;
 }
 
-__global__ void initData(uint8_t* a, uint8_t *b){
+__global__ void initData(uint32_t* a, uint32_t *b){
     
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    a[tid] = (uint8_t)(tid & c_FFMASK);
-    b[tid] = (uint8_t)(tid & c_FFMASK);
+    a[tid] = (tid & c_FFMASK);
+    b[tid] = (tid & c_FFMASK);
 }
 // use registers to speed up this calc i/e copy gmem to reg than reg to gmem
-__device__ void regTest(uint8_t* a, uint8_t *b, uint32_t *c)
+__device__ void regTest(uint32_t* a, uint32_t *b, uint32_t *c)
 {
-    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    const int tid = ((blockIdx.x * blockDim.x) + threadIdx.x);
 
-    uint8_t ra = (uint8_t) a[tid];
-    uint8_t rb = (uint8_t) b[tid];
-    uint32_t plus = ((uint32_t) (ra + rb)) << c_MSB;
-    uint32_t sub  = ((uint32_t) (ra - rb)) << c_MLSB;
-    uint32_t mult = ((uint32_t) (ra * rb)) << c_LMSB;
-    uint32_t mod  = (uint32_t) (ra % rb);
-    uint32_t res = plus || sub || mult || mod; 
-    c[tid] = res;
+    uint32_t ra = a[tid];
+    uint32_t rb = b[tid];
+    uint32_t add = ((uint32_t) (ra + rb));
+    uint32_t sub = ((uint32_t) (ra - rb));
+    uint32_t mul = ((uint32_t) (ra * rb));
+    uint32_t mod =  (uint32_t) (ra % rb);
+    c[tid*4+0] = add;
+    c[tid*4+1] = sub;
+    c[tid*4+2] = mul;
+    c[tid*4+3] = mod;
 }
 
 // use as few registers as possible global data only
-__device__ void antiRegTest(uint8_t* a, uint8_t *b, uint32_t *c)
+__device__ void antiRegTest(uint32_t* a, uint32_t *b, uint32_t *c)
 
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    c[tid] = 
-       ((uint32_t)(a[tid] + b[tid]) << c_MSB  ||
-       ((uint32_t)(a[tid] - b[tid]) << c_MLSB) ||
-       ((uint32_t)(a[tid] * b[tid]) << c_LMSB) ||
-       ((uint32_t)(a[tid] % b[tid])));
+    c[tid*4+0] = a[tid] + b[tid];
+    c[tid*4+1] = a[tid] - b[tid];
+    c[tid*4+2] = a[tid] * b[tid];
+    c[tid*4+3] = a[tid] % b[tid];
+
 }
 
-__global__ void MultKernel(uint8_t *a, uint8_t *b, uint32_t *c, int mode){
+__global__ void MultKernel(uint32_t *a, uint32_t *b, uint32_t *c, int mode){
 
     switch(mode){
         case 0:
@@ -94,10 +96,10 @@ void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmem
     printf("Timing of  %s prememcpy: %f     postmemcpy: %f \n", KMODE[mode], 
             prememcpy, postmemcpy);
     if(mode == 0 || mode == 1) {
-        uint8_t add = (uint8_t)((h_d[tid] >> 0x18) & 0xff);
-        uint8_t sub = (uint8_t)((h_d[tid] >> 0x10) & 0xff);
-        uint8_t mul = (uint8_t)((h_d[tid] >> 0x08) & 0xff);
-        uint8_t mod = (uint8_t)((h_d[tid] >> 0x00) & 0xff);
+        uint32_t add = ((h_d[tid] >> 0x18) & 0xff);
+        uint32_t sub = ((h_d[tid] >> 0x10) & 0xff);
+        uint32_t mul = ((h_d[tid] >> 0x08) & 0xff);
+        uint32_t mod = ((h_d[tid] >> 0x00) & 0xff);
         printf("Tid = %d mod 256 = %d \n", tid, (tid%256));
         printf("    %d + %d = %d \n",tid, tid, add);
         printf("    %d + %d = %d \n",tid, tid, sub);
@@ -142,13 +144,12 @@ int main(int argc, char** argv)
     checkCuda( cudaEventCreate(&s2) );
     checkCuda( cudaEventCreate(&s3) );
 
-    uint32_t *h_c = (uint32_t*) malloc(N * sizeof(uint32_t));
-    uint8_t *d_a, *d_b;
-    uint32_t *d_c;
+    uint32_t *h_c = (uint32_t*) malloc(4*N * sizeof(uint32_t));
+    uint32_t *d_a, *d_b, *d_c;
 
-    checkCuda( cudaMalloc(&d_a, N*sizeof(uint8_t)) );
-    checkCuda( cudaMalloc(&d_b, N*sizeof(uint8_t)) );
-    checkCuda( cudaMalloc(&d_c, N*sizeof(uint32_t)) );
+    checkCuda( cudaMalloc(&d_a, N*sizeof(uint32_t)) );
+    checkCuda( cudaMalloc(&d_b, N*sizeof(uint32_t)) );
+    checkCuda( cudaMalloc(&d_c, 4*N*sizeof(uint32_t)) );
 
     checkCudaKernel( (initData<<<numBlocks, blockSize>>>(d_a, d_b)) );
 
@@ -164,7 +165,7 @@ int main(int argc, char** argv)
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
         );
         checkCuda( cudaEventRecord(s2, 0) );
-        checkCuda( cudaMemcpy(h_c, d_c, N*sizeof(uint32_t), cudaMemcpyDeviceToHost) );    
+        checkCuda( cudaMemcpy(h_c, d_c, 4*N*sizeof(uint32_t), cudaMemcpyDeviceToHost) );    
         checkCuda( cudaEventRecord(s3, 0) );
 
         checkCuda( cudaEventSynchronize(s2) );
