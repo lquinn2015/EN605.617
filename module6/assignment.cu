@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 
         printf("Starting test %s\n", KMODE[i]);
         checkCuda( cudaEventRecord(s1, 0) );    
-        
+        printf("Cuda Event start");
         checkCudaKernel( 
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
         );
