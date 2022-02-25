@@ -13,7 +13,7 @@ __constant__ uint8_t c_MLSB = 0x10;
 __constant__ uint8_t c_LMSB = 0x08;
 
 #define K2TEST 3
-char KMODE[K2TEST][30] = {"Reg test", "AntiReg test", "Fmul"};
+char KMODE[K2TEST][30] = {"Reg_test", "AntiReg_test", "Fmul_test"};
 
 // FIPS 197 fmul in 2^8 mod poly(1b)
 __device__ void fmul_reg(uint8_t* a, uint8_t* b, uint32_t* c){
@@ -89,7 +89,7 @@ __global__ void MultKernel(uint8_t *a, uint8_t *b, uint32_t *c, int mode){
 
 void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmemcpy){
 
-    int tid = rand();
+    int tid = rand() % N;
     printf("Timing of  %s prememcpy: %f     postmemcpy: %f \n", KMODE[mode], 
             prememcpy, postmemcpy);
     if(mode == 0 || mode == 1) {
