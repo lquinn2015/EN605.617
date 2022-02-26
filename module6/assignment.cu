@@ -13,8 +13,28 @@ __constant__ uint32_t c_MSB  = 0x18;
 __constant__ uint32_t c_MLSB = 0x10;
 __constant__ uint32_t c_LMSB = 0x08;
 
-#define K2TEST 3
-char KMODE[K2TEST][30] = {"Reg_test", "AntiReg_test", "Fmul_test"};
+#define K2TEST 4
+char KMODE[K2TEST][30] = {"Reg_test", "AntiReg_test", "Fmul_test", "FmulAntiReg_test"};
+
+// FIPS 197 fmul in 2^8 mod poly(1b)
+__device__ void fmul_gmem(uint32_t* a, uint32_t* b, uint32_t* c){
+
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    c[tid] = 0;
+    for(int i = 0; i < 8; i++){
+        if( (b[tid] & 1) == 1) {
+            c[tid] ^= b[tid];
+        }
+        
+        if((a[tid] & 0x80) != 0){
+            a[tid] = ((a[tid] << 1) ^ 0x1b) & 0xff;
+        } else {
+            a[tid] = (a[tid] << 1) & 0xff;
+        }
+        b[tid] = b[tid] >> 1;
+        
+    } 
+}
 
 // FIPS 197 fmul in 2^8 mod poly(1b)
 __device__ void fmul_reg(uint32_t* d_a, uint32_t* d_b, uint32_t* c){
@@ -23,13 +43,12 @@ __device__ void fmul_reg(uint32_t* d_a, uint32_t* d_b, uint32_t* c){
     uint32_t a = d_a[tid];
     uint32_t b  = d_b[tid];
    
-    uint32_t i = c_ZERO;
     uint32_t p_i = a;
     uint32_t p_it = p_i;
     uint32_t ret = c_ZERO;
-    while(i < c_EIGHT){
-        
-        if(b & c_ONE == c_ONE){
+    for(int i = 0; i < 8; i++)
+    {
+        if((b & c_ONE) == c_ONE){
             ret = ret ^ p_i;
         }
         // p_i = xtime(p_i);
@@ -40,7 +59,6 @@ __device__ void fmul_reg(uint32_t* d_a, uint32_t* d_b, uint32_t* c){
             p_i = p_it & c_FFMASK;
      
         b = b >> c_ONE;
-        i++;
     }
     c[tid] = ret;
 }
@@ -91,6 +109,9 @@ __global__ void MultKernel(uint32_t *a, uint32_t *b, uint32_t *c, int mode){
             break;
         case 2:
             fmul_reg(a,b,c);
+            break;
+        case 3:
+            fmul_gmem(a,b,c);
             break;
     }
 
