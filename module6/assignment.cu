@@ -202,6 +202,7 @@ int main(int argc, char** argv)
         checkCuda( cudaMemcpy(h_c, d_c, 4*N*sizeof(uint32_t), cudaMemcpyDeviceToHost) );    
         checkCuda( cudaEventRecord(s3, 0) );
 
+        checkCuda( cudaEventSynchronize(s1) );
         checkCuda( cudaEventSynchronize(s2) );
         checkCuda( cudaEventSynchronize(s3) );
         checkCuda( cudaEventElapsedTime(&d1, s1, s2) ); 
