@@ -194,6 +194,7 @@ int main(int argc, char** argv)
     for(int i = 0; i < K2TEST; i++) {
 
         printf("Starting test %s\n", KMODE[i]);
+        checkCuda( cudaDeviceSynchronize() );
         checkCuda( cudaEventRecord(s1, 0) );    
         checkCudaKernel( 
             (MultKernel<<<numBlocks, blockSize>>>(d_a, d_b, d_c, i))
