@@ -23,7 +23,7 @@ __device__ void fmul_gmem(uint32_t* a, uint32_t* b, uint32_t* c){
     c[tid] = 0;
     for(int i = 0; i < 8; i++){
         if( (b[tid] & 1) == 1) {
-            c[tid] ^= b[tid];
+            c[tid] ^= a[tid];
         }
         
         if((a[tid] & 0x80) != 0){
