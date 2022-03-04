@@ -144,6 +144,16 @@ void print_result(int mode, uint32_t* h_d, int N, float prememcpy, float postmem
     
 }
 
+void syncEvents(cudaEvent_t s1, cudaEvent_t s2, cudaEvent_t s3, float* d1, float* d2 ){
+
+        checkCuda( cudaEventSynchronize(s1) );
+        checkCuda( cudaEventSynchronize(s2) );
+        checkCuda( cudaEventSynchronize(s3) );
+        checkCuda( cudaEventElapsedTime(d1, s1, s2) ); 
+        checkCuda( cudaEventElapsedTime(d2, s1, s3) ); 
+
+}
+
 int main(int argc, char** argv)
 {
 	// read command line arguments
@@ -157,16 +167,12 @@ int main(int argc, char** argv)
 	if (argc >= 3) {
 		blockSize = atoi(argv[2]);
 	}
-
 	int numBlocks = N/blockSize;
 
 	// validate command line arguments
 	if (N % blockSize != 0) {
 		++numBlocks;
-		N = numBlocks*blockSize;
-		
-		printf("Warning: Total thread count is not evenly divisible by the block size\n");
-		printf("The total number of threads will be rounded up to %d\n", N);
+		N = numBlocks*blockSize;	
 	}
 
     cudaDeviceProp prop;
@@ -188,6 +194,7 @@ int main(int argc, char** argv)
 
     checkCudaKernel( (initData<<<numBlocks, blockSize>>>(d_a, d_b)) );
 
+    // Execute cude
     printf("Data setup startin runs\n");
 
     float d1,d2; 
@@ -203,16 +210,13 @@ int main(int argc, char** argv)
         checkCuda( cudaMemcpy(h_c, d_c, 4*N*sizeof(uint32_t), cudaMemcpyDeviceToHost) );    
         checkCuda( cudaEventRecord(s3, 0) );
 
-        checkCuda( cudaEventSynchronize(s1) );
-        checkCuda( cudaEventSynchronize(s2) );
-        checkCuda( cudaEventSynchronize(s3) );
-        checkCuda( cudaEventElapsedTime(&d1, s1, s2) ); 
-        checkCuda( cudaEventElapsedTime(&d2, s1, s3) ); 
+        syncEvents(s1,s2,s3, &d1, &d2);
 
         print_result(i, h_c, N, d1, d2);
         printf("%s now finished \n", KMODE[i]);
     }
- 
+
+    // free everything
     free(h_c); 
     checkCuda( cudaFree(d_a) );
     checkCuda( cudaFree(d_b) );
