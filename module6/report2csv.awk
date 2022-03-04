@@ -11,21 +11,21 @@ BEGIN {
 }
 
 / Reg_test/ {
-    rt_t1[curr]=$4
-    rt_t2[curr]=$6
+    rt_t1[curr]=$5
+    rt_t2[curr]=$7
 }
 / AntiReg_test/ {
-    art_t1[curr]=$4
-    art_t2[curr]=$6
+    art_t1[curr]=$5
+    art_t2[curr]=$7
 }
 / Fmul_test/ {
-    ft_t1[curr]=$4
-    ft_t2[curr]=$6
+    ft_t1[curr]=$5
+    ft_t2[curr]=$7
 }
 
 / FmulAntiReg_test/ {
-    aft_t1[curr]=$4
-    aft_t2[curr]=$6
+    aft_t1[curr]=$5
+    aft_t2[curr]=$7
 }
 
 

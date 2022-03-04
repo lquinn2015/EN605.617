@@ -11,4 +11,4 @@ all: $(SOURCE)
 	./assignment.exe 1048576 256  >> results
 	./assignment.exe 1048576 512  >> results
 	./assignment.exe 1048576 1024 >> results
-	./report2csv.awk results
+	./report2csv.awk results > results.csv
