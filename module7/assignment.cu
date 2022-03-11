@@ -63,13 +63,17 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
     // simulate new data coming in for parity
     for(int i = 0; i < 4; i++) 
     {
-    
+        printf("Memcpy input\n");
         checkCuda( cudaMemcpy(d_a, h_a, N*sizeof(int), cudaMemcpyHostToDevice) );
         checkCuda( cudaMemcpy(d_b, h_b, N*sizeof(int), cudaMemcpyHostToDevice) );
+        printf("Kernel %d exec\n", i); 
         checkCudaKernel( (mplex_kernel<<<N, blockSize>>>(i, d_a, d_b, d_c, N)) );
+        printf("Memcpy result\n");
         checkCuda( cudaMemcpy(&h_c[N*i], &d_c[N*i], N*sizeof(int), cudaMemcpyDeviceToHost) );
     }
-    
+
+    printf("Kernels launched")   
+ 
     float t;
     checkCuda( cudaEventRecord(stop, 0) );
     checkCuda( cudaEventElapsedTime(&t, start, stop));
@@ -191,7 +195,7 @@ int main(int argc, char** argv)
     int testIdx = rand() % N;
     printf("Allocating data\n");
     allocateData(N, (int*)&h_a, (int*) &h_b, (int*)&h_c, (int*)&d_a, (int*)&d_b, (int*)&d_c);
-    printf("Allocating done running kernels");
+    printf("Allocating done running kernels\n");
 
     testSync(N, blockSize, numBlocks, testIdx, h_a, h_b, h_c, d_a, d_b, d_c);
     testStream(N, blockSize, numBlocks, testIdx, h_a, h_b, h_c, d_a, d_b, d_c); 
