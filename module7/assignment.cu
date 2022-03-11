@@ -128,8 +128,8 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
         checkCuda( cudaStreamSynchronize(streams[i]) ); // sync all threads
     }
     
-    checkCuda( cudaEventSynchronize(stop));
     checkCuda( cudaEventRecord(stop, 0) ); 
+    checkCuda( cudaEventSynchronize(stop));
     float t;
     checkCuda( cudaEventElapsedTime(&t, start, stop));
     printResultsStream(N, h_c, t, testIdx);
