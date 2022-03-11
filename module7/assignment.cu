@@ -69,7 +69,7 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
         printf("Kernel %d exec\n", i); 
         checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize>>>(i, d_a, d_b, d_c, i*N)) );
         printf("Memcpy result\n");
-        checkCuda( cudaMemcpy(&h_c[N*i], &d_c[N*i], N*sizeof(int), cudaMemcpyDeviceToHost) );
+        checkCuda( cudaMemcpy(&(h_c[N*i]), &(d_c[N*i]), N*sizeof(int), cudaMemcpyDeviceToHost) );
     }
 
     printf("Kernels launched");
