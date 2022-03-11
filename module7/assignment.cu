@@ -189,11 +189,14 @@ int main(int argc, char** argv)
 
     srand(time(NULL));
     int testIdx = rand() % N;
+    printf("Allocating data\n");
     allocateData(N, (int*)&h_a, (int*) &h_b, (int*)&h_c, (int*)&d_a, (int*)&d_b, (int*)&d_c);
+    printf("Allocating done running kernels");
 
     testSync(N, blockSize, numBlocks, testIdx, h_a, h_b, h_c, d_a, d_b, d_c);
     testStream(N, blockSize, numBlocks, testIdx, h_a, h_b, h_c, d_a, d_b, d_c); 
 
+    printf("Free data\n");
     freeData(h_a, h_b, h_c, d_a, d_b, d_c);
     
 }
