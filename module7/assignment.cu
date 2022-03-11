@@ -72,7 +72,7 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
         checkCuda( cudaMemcpy(&h_c[N*i], &d_c[N*i], N*sizeof(int), cudaMemcpyDeviceToHost) );
     }
 
-    printf("Kernels launched")   
+    printf("Kernels launched");
  
     float t;
     checkCuda( cudaEventRecord(stop, 0) );
