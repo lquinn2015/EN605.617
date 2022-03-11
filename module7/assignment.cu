@@ -140,19 +140,19 @@ void printDeviceSpecs(){
     printf("you have %d devices\n", numDevices);
 }
 
-void allocateData(int N, int *h_a, int *h_b, int *h_c, int *d_a, int *d_b, int *d_c)
+void allocateData(int N, int **h_a, int **h_b, int **h_c, int **d_a, int **d_b, int **d_c)
 {
-    checkCuda( cudaMallocHost((void **)&h_a, sizeof(int) * N) );
-    checkCuda( cudaMallocHost((void **)&h_b, sizeof(int) * N) );
-    checkCuda( cudaMallocHost((void **)&h_c, sizeof(int) * 4 *N) );
-    checkCuda( cudaMalloc((void**) &d_a, sizeof(int) * 4 * N) ); // we need more space on recv
-    checkCuda( cudaMalloc((void**) &d_b, sizeof(int) * 4 * N) );
-    checkCuda( cudaMalloc((void**) &d_c, sizeof(int) * 4 * N) );
+    checkCuda( cudaMallocHost((void **)h_a, sizeof(int) * N) );
+    checkCuda( cudaMallocHost((void **)h_b, sizeof(int) * N) );
+    checkCuda( cudaMallocHost((void **)h_c, sizeof(int) * 4 *N) );
+    checkCuda( cudaMalloc((void**) d_a, sizeof(int) * 4 * N) ); // we need more space on recv
+    checkCuda( cudaMalloc((void**) d_b, sizeof(int) * 4 * N) );
+    checkCuda( cudaMalloc((void**) d_c, sizeof(int) * 4 * N) );
     
     // dummy data input
     for(int i = 0; i < N; i++){
-        h_a[i] = rand() %10;
-        h_b[i] = rand() %10;
+        (*h_a)[i] = rand() %10;
+        (*h_b)[i] = rand() %10;
     }
 }
 
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     srand(time(NULL));
     int testIdx = rand() % N;
     printf("Allocating data\n");
-    allocateData(N, (int*)&h_a, (int*) &h_b, (int*)&h_c, (int*)&d_a, (int*)&d_b, (int*)&d_c);
+    allocateData(N, &h_a, &h_b, &h_c, &d_a, &d_b, &d_c);
     printf("Allocating done running kernels\n");
 
     testSync(N, blockSize, numBlocks, testIdx, h_a, h_b, h_c, d_a, d_b, d_c);
