@@ -69,13 +69,14 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
         printf("Kernel %d exec\n", i); 
         checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize>>>(i, d_a, d_b, d_c, i*N)) );
         printf("Memcpy result\n");
-        checkCuda( cudaMemcpy(&(h_c[N*i]), &(d_c[N*i]), N*sizeof(int), cudaMemcpyDeviceToHost) );
+        checkCuda( cudaMemcpy(&h_c[N*i], &d_c[N*i], N*sizeof(int), cudaMemcpyDeviceToHost) );
     }
 
-    printf("Kernels launched");
+    printf("Kernels launched\n");
  
     float t;
     checkCuda( cudaEventRecord(stop, 0) );
+    checkCuda( cudaEventSynchronize(stop));
     checkCuda( cudaEventElapsedTime(&t, start, stop));
     printResultsSync(N, h_c, t, testIdx);
 
@@ -96,9 +97,9 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
         int *d_a, int *d_b, int *d_c)
 {
 
-    cudaEvent_t start, end;
+    cudaEvent_t start, stop;
     checkCuda( cudaEventCreate(&start) );
-    checkCuda( cudaEventCreate(&end) );
+    checkCuda( cudaEventCreate(&stop) );
     
     printf("Starting streaming approach \n");
     checkCuda( cudaEventRecord(start, 0));
@@ -119,9 +120,10 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
         checkCuda( cudaStreamSynchronize(streams[i]) ); // sync all threads
     }
     
-    checkCuda( cudaEventRecord(end, 0) ); 
+    checkCuda( cudaEventSynchronize(stop));
+    checkCuda( cudaEventRecord(stop, 0) ); 
     float t;
-    checkCuda( cudaEventElapsedTime(&t, start, end));
+    checkCuda( cudaEventElapsedTime(&t, start, stop));
     printResultsStream(N, h_c, t, testIdx);
 
 
