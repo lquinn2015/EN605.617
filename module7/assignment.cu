@@ -67,7 +67,7 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
         checkCuda( cudaMemcpy(d_a, h_a, N*sizeof(int), cudaMemcpyHostToDevice) );
         checkCuda( cudaMemcpy(d_b, h_b, N*sizeof(int), cudaMemcpyHostToDevice) );
         printf("Kernel %d exec\n", i); 
-        checkCudaKernel( (mplex_kernel<<<N, blockSize>>>(i, d_a, d_b, d_c, i*N)) );
+        checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize>>>(i, d_a, d_b, d_c, i*N)) );
         printf("Memcpy result\n");
         checkCuda( cudaMemcpy(&h_c[N*i], &d_c[N*i], N*sizeof(int), cudaMemcpyDeviceToHost) );
     }
@@ -111,7 +111,7 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
     for(int i = 0; i < 4; i++){
         checkCuda( cudaMemcpyAsync(d_a, h_a, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
         checkCuda( cudaMemcpyAsync(d_b, h_b, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
-        checkCudaKernel( (mplex_kernel<<<N, blockSize, 0, streams[i]>>>(i, d_a, d_b, d_c, 0)) );
+        checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize, 0, streams[i]>>>(i, d_a, d_b, d_c, 0)) );
         checkCuda( cudaMemcpyAsync(&h_c[N*i], &d_c[N*i], sizeof(int)*N, cudaMemcpyHostToDevice, streams[i]) );
     }
 
