@@ -7,19 +7,19 @@
 // basic math op kernels ensure 4|A| = |C| and offset <= 3|A|
 __device__ void gpu_add(int* a, int* b, int *c, int offset){
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    c[offset + tid] = a[tid] + b[tid];
+    c[offset + tid] = a[tid + offset] + b[tid + offset];
 }
 __device__ void gpu_sub(int* a, int* b, int *c, int offset){
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    c[offset + tid] = a[tid] - b[tid];
+    c[offset + tid] = a[tid + offset] - b[tid + offset];
 }
 __device__ void gpu_mul(int* a, int* b, int *c, int offset){
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    c[offset + tid] = a[tid] * b[tid];
+    c[offset + tid] = a[tid + offset] * b[tid + offset];
 }
 __device__ void gpu_xor(int* a, int* b, int *c, int offset){
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    c[offset + tid] = a[tid] ^ b[tid];
+    c[offset + tid] = a[tid + offset] ^ b[tid + offset];
 }
     
 __global__ void mplex_kernel(int ksel, int *a, int *b, int *c, int offset){
@@ -43,7 +43,7 @@ __global__ void mplex_kernel(int ksel, int *a, int *b, int *c, int offset){
 
 void printResultsSync(int N, int* h_c, float t, int idx)
 {
-    printf("Sync kernels finished in %f ms", t);
+    printf("Sync kernels finished in %f ms \n", t);
     printf("A[%d] + B[%d] = %d \n", idx, idx, h_c[idx]);
     printf("A[%d] - B[%d] = %d \n", idx, idx, h_c[idx+N]);
     printf("A[%d] * B[%d] = %d \n", idx, idx, h_c[idx+N*2]);
@@ -64,8 +64,8 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
     for(int i = 0; i < 4; i++) 
     {
         printf("Memcpy input\n");
-        checkCuda( cudaMemcpy(d_a, h_a, N*sizeof(int), cudaMemcpyHostToDevice) );
-        checkCuda( cudaMemcpy(d_b, h_b, N*sizeof(int), cudaMemcpyHostToDevice) );
+        checkCuda( cudaMemcpy(&d_a[N*i], h_a, N*sizeof(int), cudaMemcpyHostToDevice) );
+        checkCuda( cudaMemcpy(&d_b[N*i], h_b, N*sizeof(int), cudaMemcpyHostToDevice) );
         printf("Kernel %d exec\n", i); 
         checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize>>>(i, d_a, d_b, d_c, i*N)) );
         printf("Memcpy result\n");
@@ -104,19 +104,25 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
     printf("Starting streaming approach \n");
     checkCuda( cudaEventRecord(start, 0));
 
+    printf("Create Streams\n");
     cudaStream_t streams[4]; // lets running everything in parallel
     for(int i = 0; i < 4; i++) {
         checkCuda( cudaStreamCreate(&streams[i]) );
     }
 
     for(int i = 0; i < 4; i++){
-        checkCuda( cudaMemcpyAsync(d_a, h_a, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
-        checkCuda( cudaMemcpyAsync(d_b, h_b, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
+        
+        printf("Queue memcpy %d \n", i);
+        checkCuda( cudaMemcpyAsync(&d_a[N*i], h_a, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
+        checkCuda( cudaMemcpyAsync(&d_b[N*i], h_b, sizeof(int) * N, cudaMemcpyHostToDevice, streams[i]) );
+        printf("Queue kernels launch %d \n", i);
         checkCudaKernel( (mplex_kernel<<<numBlocks, blockSize, 0, streams[i]>>>(i, d_a, d_b, d_c, 0)) );
+        printf("Queue memcpy result %d \n", i);
         checkCuda( cudaMemcpyAsync(&h_c[N*i], &d_c[N*i], sizeof(int)*N, cudaMemcpyHostToDevice, streams[i]) );
     }
 
     for(int i = 0; i < 4; i++) {
+        printf("Syncing %d \n", i);
         checkCuda( cudaStreamSynchronize(streams[i]) ); // sync all threads
     }
     
