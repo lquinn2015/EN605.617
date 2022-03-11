@@ -80,12 +80,14 @@ void testSync(int N, int blockSize, int numBlocks, int testIdx,
     checkCuda( cudaEventElapsedTime(&t, start, stop));
     printResultsSync(N, h_c, t, testIdx);
 
+    checkCuda( cudaEventDestroy(start) );
+    checkCuda( cudaEventDestroy(stop) );
 
 }
     
 void printResultsStream(int N, int* h_c, float t, int idx){
     
-    printf("Stream kernels finished in %f ms", t);
+    printf("Stream kernels finished in %f ms \n", t);
     printf("A[%d] + B[%d] = %d \n", idx, idx, h_c[idx]);
     printf("A[%d] - B[%d] = %d \n", idx, idx, h_c[idx+N]);
     printf("A[%d] * B[%d] = %d \n", idx, idx, h_c[idx+N*2]);
@@ -132,7 +134,8 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
     checkCuda( cudaEventElapsedTime(&t, start, stop));
     printResultsStream(N, h_c, t, testIdx);
 
-
+    checkCuda( cudaEventDestroy(start) );
+    checkCuda( cudaEventDestroy(stop) );
 }
 
 
