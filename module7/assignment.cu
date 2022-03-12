@@ -140,7 +140,7 @@ void testStream(int N, int blockSize, int numBlocks, int testIdx,
 
 
 // print the specs of this machine and number of devices
-void printDeviceSpecs(){
+void printDeviceSpecs(int N, int blockSize){
     
     cudaDeviceProp prop;
     checkCuda( cudaGetDeviceProperties(&prop, 0) );
@@ -149,6 +149,8 @@ void printDeviceSpecs(){
     int numDevices;
     checkCuda( cudaGetDeviceCount(&numDevices) );
     printf("you have %d devices\n", numDevices);
+
+    printf("Running problem of size %d with blocksize %d on just one device\n");
 }
 
 void allocateData(int N, int **h_a, int **h_b, int **h_c, int **d_a, int **d_b, int **d_c)
