@@ -6,16 +6,16 @@ BEGIN {
 
 /problem of size / {
     ++curr
-    wsize[curr]=$4
-    blksize[curr]=$7
+    wsize[curr]=$5
+    blksize[curr]=$8
 }
 
 /Sync kernels / {
-    sync[curr]=$4
+    sync[curr]=$5
 }
 
 /Stream kernels / {
-    stream[curr]=$4
+    stream[curr]=$5
 }
 
 END {
