@@ -27,8 +27,8 @@ __device__ void simple_squaring_operation(unsigned int * const data,
                 const unsigned int tid)
 {
     //square the mem value and overwrite
-    
-    data[tid] = data[tid] * data[tid]; // I forced tid < maxElements in the caller
+    unsigned int x = data[tid];
+    data[tid] = x*x; // I forced tid < maxElements in the caller to avoid crashing
 }
 
 __global__ void gpu_register_array_operation(unsigned int * const data, const unsigned int num_elements)
