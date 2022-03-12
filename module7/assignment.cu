@@ -150,7 +150,7 @@ void printDeviceSpecs(int N, int blockSize){
     checkCuda( cudaGetDeviceCount(&numDevices) );
     printf("you have %d devices\n", numDevices);
 
-    printf("Running problem of size %d with blocksize %d on just one device\n");
+    printf("Running problem of size %d with blocksize %d on just one device\n", N, blockSize);
 }
 
 void allocateData(int N, int **h_a, int **h_b, int **h_c, int **d_a, int **d_b, int **d_c)
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 		N = numBlocks*blockSize;	
 	}
 
-    printDeviceSpecs(); 
+    printDeviceSpecs(N, blockSize); 
     
     int *h_a, *h_b, *h_c;  // C is 4x len(a) 
     int *d_a, *d_b, *d_c;
