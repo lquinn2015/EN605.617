@@ -2,18 +2,20 @@
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
+    
     assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
-    float *max = &db[n]; // db has a max at n
-    int* mutex = (int*) &db[n+1];
+    __shared__ float cache[c_FIND_MAX_CACHESIZE];
 
     unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
     unsigned stride = gridDim.x * blockDim.x;
     unsigned offset = 0;
-    __shared__ float cache[c_FIND_MAX_CACHESIZE];
-    
     if(threadIdx.x == 0) {
-        printf("My stride is %d\n", stride);
+        printf("My stride is %d and n is %d\n", stride, n);
+
     }
+    
+    float *max = &db[n]; // db has a max at n
+    int* mutex = (int*) &db[n+1];
     
     float tmp = -1.0;
     while(idx + offset < n){
@@ -218,7 +220,7 @@ int main(int argc, char** argv)
 
     // FFT from random noise
     printf("Gen noise\n");
-    cuFloatComplex *noise = genNoise(s, 10000);
+    cuFloatComplex *noise = genNoise(s, 5000);
     printf("Calculating fft of noise IQ dat\n");
     create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
     
