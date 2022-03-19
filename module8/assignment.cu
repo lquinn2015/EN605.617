@@ -102,7 +102,8 @@ void plotfft(float f_c, float f_s, int n, float* db){
 
     float lowF = Fc_Mhz - Fs_Mhz/2; 
     float highF = Fc_Mhz + Fs_Mhz/2;
-
+    
+    fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++);
     fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
     fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
     for(int i = 0; i < n; i++){
@@ -138,11 +139,6 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
     checkCufft( cufftDestroy(plan) ); // brick the plan after being sued
-    checkCuda( cudaStreamSynchronize(s) );
-    checkCuda( cudaDeviceSynchronize() ); // this is required?
-
-    testKern<<<1,1,0,s>>>();
-    checkCuda( cudaStreamSynchronize(s) );
 
     // we have a FFT we need to normalize the db data so it makes sense
     checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
