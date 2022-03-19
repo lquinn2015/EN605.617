@@ -166,9 +166,9 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
 
 __global__ void kern_gen_noise(cuFloatComplex* z, int n, int seed)
 {
-    const unsigned int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    const unsigned long tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     curandState_t state;
-    curand_init(seed, 0, tid, &state);
+    curand_init(seed, 0, tid*2, &state);
     
     unsigned int idx = tid; 
     unsigned int stride = gridDim.x*blockDim.x; // #blocks * blockSize
