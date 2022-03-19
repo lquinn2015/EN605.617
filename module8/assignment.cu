@@ -104,6 +104,7 @@ void plotfft(float f_c, float f_s, int n, float* db){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
     }
     fprintf(gnuplot, "e\n");
+    fflush(gnuplot);
 
 }
 
@@ -218,5 +219,4 @@ int main(int argc, char** argv)
     
     free(noise);
     checkCuda( cudaStreamDestroy(s) );
-    fflush(gnuplot);
 }
