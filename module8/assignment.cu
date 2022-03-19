@@ -86,7 +86,7 @@ void plot_xy_data(double* x, double *y, int n)
     fprintf(gnuplot, "e\n");
 }
 
-void plotfft(float f_c, float f_s, int n, float* db){
+void plotfft(float f_c, float f_s, int n, float* db, const char* title){
 
     float Fc_Mhz = f_c / 1e6; // div by 10^6 to shift to mhz units
     float Fs_Mhz = f_s / 1e6;
@@ -96,7 +96,7 @@ void plotfft(float f_c, float f_s, int n, float* db){
     
     fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++);
     fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
-    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
+    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 title %s \n", title);
     for(int i = 0; i < n; i++){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
     }
@@ -109,7 +109,8 @@ void plotfft(float f_c, float f_s, int n, float* db){
     
 void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float f_c, // freqency center 
-    float f_s  // sample rate 
+    float f_s,  // sample rate 
+    const char* title
 ){
     
     printf("Starting FFT\n");
@@ -143,7 +144,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
 
     // plot and release results
     printf("plotting fft\n");
-    plotfft(f_c,f_s, n, db);
+    plotfft(f_c,f_s, n, db, title);
 
     printf("Free data\n");
     checkCuda( cudaFree(d_sig) );
@@ -206,14 +207,14 @@ int main(int argc, char** argv)
     checkCuda( cudaStreamCreate(&s) );
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
     free(z);
 
     // FFT from random noise
     printf("Gen noise\n");
     cuFloatComplex *noise = genNoise(s, 5000);
     printf("Calculating fft of noise IQ dat\n");
-    create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
+    create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6, "Noise FFT"); 
     
     free(noise);
     checkCuda( cudaStreamDestroy(s) );
