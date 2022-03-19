@@ -7,13 +7,15 @@
 // globals
 static FILE* gnuplot;
 
+__constant__ float c_dBAdjustment = 10.0;
+
 __global__ void fft2amp(int n, cuFloatComplex *fft, float *db){
 
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int idx = tid;
     while( idx < n){
-        db[idx] = log10(cuCabsf(fft[idx]));
-        idx += blockDim.x;
+        db[idx] = c_dBAdjustment * log10(cuCabsf(fft[idx]));
+        idx += blockDim.x; 
     }
 
 }

@@ -6,3 +6,4 @@ STRETCH = module7_stretch_problem.cu
 
 all: $(SOURCE)
 	nvcc $(INCLUDES) $(SOURCE) -DD$(PLOT) -o assignment.exe 
+	./assignment.exe
