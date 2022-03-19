@@ -150,8 +150,8 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float * db = (float*) malloc(n*sizeof(float) + 2); 
 
     // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
-    checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
-    checkCuda( cudaMemcpyAsync(&db[n/2], d_db, n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaMemcpy(db, &d_db[n/2], n/2*sizeof(float),cudaMemcpyDeviceToHost) );
+    checkCuda( cudaMemcpy(&db[n/2], d_db, n/2*sizeof(float),cudaMemcpyDeviceToHost) );
     checkCuda( cudaStreamSynchronize(s) );
 
     // plot and release results
