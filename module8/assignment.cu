@@ -32,6 +32,7 @@ __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db, int* mutex)
         while(atomicCAS(mutex, 0, 1) != 0); // lock
         *max =fmaxf(*max, cache[0]);
         atomicExch(mutex, 0); // unlock
+        printf("block reduced\n");
     }
 }
 
@@ -141,6 +142,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftDestroy(plan) );
     checkCuda( cudaFree(d_sig) );
     checkCuda( cudaFree(d_fft) );
+    checkCuda( cudaFree(d_mutex) );
     free(db);
     printf("Finish fft\n");
 
