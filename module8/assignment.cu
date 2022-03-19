@@ -99,10 +99,16 @@ int main(int argc, char** argv)
     double *idata, *qdata;
     cuFloatComplex *z = readData(&n, idata, qdata); // we have n complex numbers now
 
+    #ifdef DPLOT
     gnuplot = popen("gnuplot -persistent", "w");
-    
-       
+    #else
+    gnuplot = fopen("gplot", "w");    
+    #endif
 
+    cudaStream_t s;
+    checkCuda( cudaStreamCreate(&s));
+    create_fft(z, 5000, 0, s);
+    
     
 
 }

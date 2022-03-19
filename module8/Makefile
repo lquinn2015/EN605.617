@@ -5,4 +5,4 @@ INCLUDES = -I../utils/ -lcuda -lcudart -lcufft
 STRETCH = module7_stretch_problem.cu
 
 all: $(SOURCE)
-	nvcc $(INCLUDES) $(SOURCE) -o assignment.exe 
+	nvcc $(INCLUDES) $(SOURCE) -DD$(PLOT) -o assignment.exe 
