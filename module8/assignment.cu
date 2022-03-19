@@ -150,9 +150,8 @@ __global__ void kern_gen_noise(cuFloatComplex* z, int n, int seed)
     curandState_t state;
     curand_init(seed, 0, 0, &state);
     
-    unsigned idx = tid; 
-    unsigned stride = gridDim.x * blockDim.x;
-    
+    unsigned int idx = tid; 
+    unsigned int stride = gridDim.x * blockDim.x;
     if(idx < n) {
         unsigned char i = curand(&state) % 127;
         unsigned char q = curand(&state) % 127;
@@ -167,7 +166,9 @@ cuFloatComplex* genNoise(cudaStream_t s, int n)
     z = (cuFloatComplex *) malloc(sizeof(cuFloatComplex)*n); 
     checkCuda( cudaMalloc((void**)&d_z, sizeof(cuFloatComplex)*n) );
     
-    checkCudaKernel( (kern_gen_noise<<<(n/1024)+1, 1024, 0, s>>>(d_z, n, (int)time(NULL))) );
+    int blocks = n / 1024 + 1;  // n < 1024 than blocks  = 0 so add    
+ 
+    checkCudaKernel( (kern_gen_noise<<<blocks, 1024, 0, s>>>(d_z, n, (int)time(NULL))) );
     checkCuda( cudaMemcpyAsync(z, d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
     checkCuda( cudaStreamSynchronize(s) );
 
