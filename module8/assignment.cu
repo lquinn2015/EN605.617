@@ -13,7 +13,7 @@ __global__ void fft2amp(int n, cuFloatComplex *fft, float *db){
     int idx = tid;
     while( idx < n){
         db[idx] = cuCabsf(fft[idx]);
-        idx += tid;
+        idx += blockDim.x;
     }
 
 }
