@@ -145,14 +145,14 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaStreamSynchronize(s) );
 
     // we have a FFT we need to normalize the db data so it makes sense
-    checkCudaKernel( (findMaxMag<<<2,1024, 0>>>(n, d_fft, d_db)) );
-    checkCudaKernel( (fft2amp<<<1, 1024, 0>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float) + 2); 
 
     // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
+    checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaMemcpyAsync(&db[n/2], d_db, n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
     checkCuda( cudaStreamSynchronize(s) );
-    checkCuda( cudaMemcpy(db, &d_db[n/2], n/2*sizeof(float),cudaMemcpyDeviceToHost) );
-    checkCuda( cudaMemcpy(&db[n/2], d_db, n/2*sizeof(float),cudaMemcpyDeviceToHost) );
 
     // plot and release results
     printf("plotting fft\n");
@@ -161,6 +161,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Free data\n");
     checkCuda( cudaFree(d_sig) );
     checkCuda( cudaFree(d_fft) );
+    checkCuda( cudaFree(d_db)  );
     free(db);
 }
 
@@ -218,7 +219,6 @@ int main(int argc, char** argv)
     checkCuda( cudaStreamCreate(&s) );
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
     free(z);
 
