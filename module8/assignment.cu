@@ -194,7 +194,7 @@ cuFloatComplex* genNoise(cudaStream_t s, int n)
 
     checkCuda( cudaFree(d_z) );
     for(int i = 0; i < 10; i++){
-        printf("z = %d i*%d", z.x, z.y);
+        printf("z = %f i*%f",  cuCrealf(z[i]), cuCimagf(z[i]));
     }
     return z;
 }
