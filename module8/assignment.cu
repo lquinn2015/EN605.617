@@ -3,15 +3,14 @@
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db, int* mutex)
 {
     assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
-    float *max = &db[n]; // db has a max and lock at the tail
-    //int *mutex = (int*) &db[n+1]; 
+    float *max = &db[n]; // db has a max at n
 
-    unsigned idx = threadIdx.x + blockIdx.x*blockDim.x;
-    unsigned stride = gridDim.x*blockIdx.x;
+    unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
+    unsigned stride = gridDim.x * blockIdx.x;
     unsigned offset = 0;
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
     
-    float tmp = 0.0;
+    float tmp = -1.0;
     while(idx + offset < n){
         tmp = fmaxf(tmp, cuCabsf(arr[idx+offset]));
         offset += stride;
@@ -20,7 +19,7 @@ __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db, int* mutex)
     __syncthreads();
 
     //reduce in the block
-    unsigned int i = blockDim.x/2;
+    unsigned int i = blockDim.x/2; 
     while(i != 0){
         if(threadIdx.x < i){
             cache[threadIdx.x] = fmaxf(cache[threadIdx.x], cache[threadIdx.x+i]);
@@ -97,6 +96,8 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 1) ); // n stores our max
     checkCuda( cudaMalloc((void**)&d_mutex, sizeof(int)) ); // mutex
+    checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +1, s) );
+    checkCuda( cudaMemsetAsync(d_mutex, 0, sizeof(int), s) );
 
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
@@ -112,7 +113,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCudaKernel( (findMaxMag<<<1,1024, 0, s>>>(n, d_fft, d_db, d_mutex)) );
     printf("find amp\n");
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
-    float * db = (float*) malloc(n*sizeof(float) + 2); 
+    float * db = (float*) malloc(n*sizeof(float) + 1); 
     // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
     printf("copy amp\n");
     checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
