@@ -1,7 +1,7 @@
 #include "assignment.cuh" // important globals are defined here read it
 
 __global__ void testKern(){
-    printf("hello\n");
+    printf("hello from test kern\n");
 }
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
