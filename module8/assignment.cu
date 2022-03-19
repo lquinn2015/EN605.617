@@ -94,6 +94,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n+1 stores our max n+2 is lock;
+    checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n + 2) );
 
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
