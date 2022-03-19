@@ -151,8 +151,7 @@ __global__ void kern_gen_noise(cuFloatComplex* z, int n, int seed)
     curand_init(seed, 0, 0, &state);
     
     unsigned int idx = tid; 
-    unsigned int stride = gridDim.x * blockDim.x;
-    if(threadIdx.x == 0) printf("%d is stride\n", stride);
+    unsigned int stride = gridDim.x*blockDim.x; // #blocks * blockSize
     while(idx < n) {
         unsigned char i = curand(&state) % 127;
         unsigned char q = curand(&state) % 127;
@@ -200,8 +199,9 @@ int main(int argc, char** argv)
     free(z);
 
     // FFT from random noise
-    printf("Calculating fft of noise IQ dat\n");
+    printf("Gen noise\n");
     cuFloatComplex *noise = genNoise(s, 5000);
+    printf("Calculating fft of noise IQ dat\n");
     create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
     
     free(noise);
