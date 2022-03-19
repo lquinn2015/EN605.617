@@ -90,7 +90,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Sync Complete ploting now\n");
 
     float Fc_Mhz = f_c / 10e6; // div by 10^6 to shift to mhz units
-    float Fs_Mhz = f_c / 10e6;
+    float Fs_Mhz = f_s / 10e6;
 
     float lowF = Fc_Mhz - Fs_Mhz; 
     float highF = Fc_Mhz + Fs_Mhz;
