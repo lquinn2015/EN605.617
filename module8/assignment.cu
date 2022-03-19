@@ -1,23 +1,49 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "cuComplex.h"
-#include "cuda_utils.cuh"
-#include <cufft.h>
+#include "assignment.cuh" // important globals are defined here read it
 
-// globals
-static FILE* gnuplot;
+__global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
+{
+    float *max = &db[n]; // db has a max and lock at the tail
+    int *mutex = (int*) &db[n+1]; 
 
-__constant__ float c_dBAdjustment = 10.0;
+    unsigned idx = threadIdx.x + blockIdx.x*blockDim.x;
+    unsigned stride = gridDim.x*blockIdx.x;
+    unsigned offset = 0;
+    __shared__ float cache[c_FIND_MAX_CACHESIZE];
+    
+    float tmp = 0.0;
+    while(idx + offset < n){
+        tmp = fmaxf(tmp, cuCabsf(arr[idx+offset]));
+        offset += stride;
+    }
+    cache[threadIdx.x] = tmp;
+    __syncthreads();
 
-__global__ void fft2amp(int n, cuFloatComplex *fft, float *db){
+    //reduce in the block
+    unsigned i = blockDim.x/2;
+    while(i != 0){
+        if(threadIdx.x < i){
+            cache[threadIdx.x] = fmaxf(cache[threadIdx.x], cache[threadIdx.x+i]);
+        }
+        __syncthreads();
+        i /= 2;
+    }
+    // reduce among all blocks
+    if(threadIdx.x == 0){
+        while(atomicCAS(mutex, 0, 1) != 0); // lock
+        *max =fmaxf(*max, cache[0]);
+        atomicExch(mutex, 0); // unlock
+    }
+}
 
+__global__ void fft2amp(int n, cuFloatComplex *fft, float *db)
+{
+    float dbMax = db[n];
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int idx = tid;
     while( idx < n){
-        db[idx] = c_dBAdjustment * log10(cuCabsf(fft[idx]));
+        db[idx] = c_dBAdjustment * log10(cuCabsf(fft[idx])/dbMax) ;
         idx += blockDim.x; 
     }
-
 }
 
 cuFloatComplex* readData(int *n, double *&idata, double *&qdata)
@@ -37,14 +63,13 @@ cuFloatComplex* readData(int *n, double *&idata, double *&qdata)
         z[i] = make_cuFloatComplex( (float)data[2*i] - 127.0, (float)data[2*i+1] -127.0 );
         idata[i] = data[2*i] - 127.0;
         qdata[i] = data[2*i+1] - 127.0;
-    
     }
     free(data); 
     fclose(f);
     *n = samples;
     return z;
 }
-static int cplot = 0;
+
 void plot_xy_data(double* x, double *y, int n)
 {
     fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++ );
@@ -68,7 +93,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float * d_db; 
     checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
-    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n) );
+    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n+1 stores our max n+2 is lock;
 
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
@@ -79,7 +104,9 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
 
     printf("Starting kernel\n");
-    // we have a FFT we need to extract and plot the amplitude of it now
+    // we have a FFT we need to normalize the db data;
+    checkCudaKernel( (findMaxMag<<<2,1024, 1024*sizeof(float), s>>>(n, d_fft, d_db)) );
+    //checkCuda( cudaStreamSynchronize(s) ); we probably don't need this
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float)); 
     // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
