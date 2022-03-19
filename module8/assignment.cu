@@ -1,5 +1,9 @@
 #include "assignment.cuh" // important globals are defined here read it
 
+__global__ void testKern(){
+    printf("hello\n");
+}
+
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
     if(threadIdx.x == 0) printf("Hello\n"); 
@@ -110,6 +114,7 @@ void plotfft(float f_c, float f_s, int n, float* db){
 
 }
 
+
     
 void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float f_c, // freqency center 
@@ -123,10 +128,12 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     // setup data
     checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
-    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n stores our max
+    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // lock and max space
     checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
-    
+
+    testKern<<<1,1,0,s>>>();    
+
     // setup FFT
     printf("Running FFT \n");
     cufftHandle plan;
@@ -134,6 +141,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
 
+    testKern<<<1,1,0,s>>>();    
     // we have a FFT we need to normalize the db data so it makes sense
     checkCuda( cudaStreamSynchronize(s) );
     printf("Running Fixup kernels \n");
