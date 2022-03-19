@@ -152,7 +152,8 @@ __global__ void kern_gen_noise(cuFloatComplex* z, int n, int seed)
     
     unsigned int idx = tid; 
     unsigned int stride = gridDim.x * blockDim.x;
-    if(idx < n) {
+    if(threadIdx.x == 0) printf("%d is stride\n", stride);
+    while(idx < n) {
         unsigned char i = curand(&state) % 127;
         unsigned char q = curand(&state) % 127;
         z[tid] = make_cuFloatComplex(i,q);
