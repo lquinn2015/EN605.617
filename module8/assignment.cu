@@ -137,7 +137,11 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
+    checkCuda( cudaStreamSynchronize(s) );
     checkCuda( cudaDeviceSynchronize() ); // this is required?
+
+    testKern<<<1,1,0,s>>>();
+    checkCuda( cudaStreamSynchronize(s) );
 
     // we have a FFT we need to normalize the db data so it makes sense
     checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
