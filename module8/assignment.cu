@@ -137,6 +137,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
+    checkCufft( cufftDestroy(plan) ); // brick the plan after being sued
     checkCuda( cudaStreamSynchronize(s) );
     checkCuda( cudaDeviceSynchronize() ); // this is required?
 
@@ -158,7 +159,6 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     plotfft(f_c,f_s, n, db);
 
     printf("Free data\n");
-    checkCufft( cufftDestroy(plan) );
     checkCuda( cudaFree(d_sig) );
     checkCuda( cudaFree(d_fft) );
     free(db);
