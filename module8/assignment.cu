@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 
     // FFT from random noise
     printf("Gen noise\n");
-    cuFloatComplex *noise = genNoise(s, 5000);
+    cuFloatComplex *noise = genNoise(s, 10000);
     printf("Calculating fft of noise IQ dat\n");
     create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
     
