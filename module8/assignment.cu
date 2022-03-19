@@ -141,11 +141,12 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
 
-    testKern<<<1,1,0,s>>>();    
     // we have a FFT we need to normalize the db data so it makes sense
     checkCuda( cudaStreamSynchronize(s) );
     printf("Running Fixup kernels \n");
+    testKern<<<1,1,0,s>>>();    
     checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
+    testKern<<<1,1,0,s>>>();    
     checkCuda( cudaStreamSynchronize(s) );
     printf("max passed\n");
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
