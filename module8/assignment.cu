@@ -92,8 +92,8 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float Fc_Mhz = f_c / 1e6; // div by 10^6 to shift to mhz units
     float Fs_Mhz = f_s / 1e6;
 
-    float lowF = Fc_Mhz - Fs_Mhz; 
-    float highF = Fc_Mhz + Fs_Mhz;
+    float lowF = Fc_Mhz - Fs_Mhz/2; 
+    float highF = Fc_Mhz + Fs_Mhz/2;
 
     fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%1.f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
     fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
