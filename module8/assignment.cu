@@ -200,8 +200,9 @@ int main(int argc, char** argv)
     // FFT from random noise
     printf("Calculating fft of noise IQ dat\n");
     cuFloatComplex *noise = genNoise(s, 5000);
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6); 
-
+    create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
+    
+    free(noise);
     checkCuda( cudaStreamDestroy(s) );
-
+    fflush(gnuplot);
 }
