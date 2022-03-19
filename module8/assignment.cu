@@ -82,48 +82,13 @@ void plot_xy_data(double* x, double *y, int n)
     fprintf(gnuplot, "e\n");
 }
 
-    
-// user job to insure that z[offset+n] does not overboubd 
-void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
-    float f_c, // freqency center 
-    float f_s  // sample rate 
-){
-    
-    printf("Starting FFT\n");
-    cufftComplex *d_sig, *d_fft;
-    float * d_db; 
-    checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
-    checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
-    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n stores our max
-    checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
-
-    checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
-    
-    printf("Starting plan\n");
-    cufftHandle plan;
-    checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
-    checkCufft( cufftSetStream(plan, s) );
-    checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
-
-    // we have a FFT we need to normalize the db data;
-    checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
-    checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
-    float * db = (float*) malloc(n*sizeof(float) + 2); 
-    // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
-    checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
-    
-    checkCuda( cudaMemcpyAsync(&db[n/2], d_db, n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
-
-    printf("Sync start\n");
-    checkCuda( cudaStreamSynchronize(s) );
-    printf("Sync Complete ploting now\n");
+void plotfft(float f_c, float f_s, int n, float* db){
 
     float Fc_Mhz = f_c / 1e6; // div by 10^6 to shift to mhz units
     float Fs_Mhz = f_s / 1e6;
 
     float lowF = Fc_Mhz - Fs_Mhz/2; 
     float highF = Fc_Mhz + Fs_Mhz/2;
-    printf("%f %f %f\n", lowF, Fc_Mhz, highF);
 
     fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
     fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
@@ -131,32 +96,105 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
     }
     fprintf(gnuplot, "e\n");
+
+}
+
     
+void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
+    float f_c, // freqency center 
+    float f_s  // sample rate 
+){
+    
+    cufftComplex *d_sig, *d_fft;
+    float * d_db; 
+    
+    // setup data
+    checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
+    checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
+    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n stores our max
+    checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
+    checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
+    
+    // setup FFT
+    cufftHandle plan;
+    checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
+    checkCufft( cufftSetStream(plan, s) );
+    checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
+
+    // we have a FFT we need to normalize the db data so it makes sense
+    checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
+    float * db = (float*) malloc(n*sizeof(float) + 2); 
+
+    // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
+    checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaMemcpyAsync(&db[n/2], d_db, n/2*sizeof(float),cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaStreamSynchronize(s) );
+
+    // plot and release results
+    plotfft(f_c,f_s, n, db);
+
     checkCufft( cufftDestroy(plan) );
     checkCuda( cudaFree(d_sig) );
     checkCuda( cudaFree(d_fft) );
     free(db);
-    printf("Finish fft\n");
-
 }
 
+//////////////// cuRand Section ////////////////////////////////////////////////
+
+
+__global__ void kern_gen_noise(cuFloatComplex* z, int n, int seed)
+{
+    const unsigned int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    curandState_t state;
+    curand_init(seed, 0, 0, &state);
+
+    if(tid < n) {
+        unsigned char i = curand(&state) % 127;
+        unsigned char q = curand(&state) % 127;
+        z[tid] = make_cuFloatComplex(i,q);
+    }
+}
+
+cuFloatComplex* genNoise(cudaStream_t s, int n)
+{
+    cuFloatComplex *z, *d_z;
+    z = (cuFloatComplex *) malloc(sizeof(cuFloatComplex)*n); 
+    checkCuda( cudaMalloc((void**)&d_z, sizeof(cuFloatComplex)*n) );
+    
+    checkCudaKernel( (kern_gen_noise<<<(n/1024)+1, 1024, 0, s>>>(d_z, n, time(NULL))) );
+    checkCuda( cudaMemcpyAsync(z, d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaStreamSynchronize(s) );
+
+    checkCuda( cudaFree(d_z) );
+    return z;
+}
+
+//////////////// cuRand Section end ////////////////////////////////////////////
 
 int main(int argc, char** argv)
 {
     int n;
     double *idata, *qdata;
     cuFloatComplex *z = readData(&n, idata, qdata); // we have n complex numbers now
+    free(idata); free(qdata); // unused
 
     #ifdef DPLOT
     gnuplot = popen("gnuplot -persistent", "w");
     #else
-    gnuplot = fopen("gplot", "w");    
+    gnuplot = fopen("gplot", "w"); // with live ploting off write theplots to a file
     #endif
 
     cudaStream_t s;
-    checkCuda( cudaStreamCreate(&s));
+    checkCuda( cudaStreamCreate(&s) );
+    // FFT from actual data
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
-    
-    
+    free(z);
+
+    // FFT from random noise
+    cuFloatComplex *noise = genNoise(s, 5000);
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6); 
+
+    checkCuda( cudaStreamDestroy(s) );
 
 }
