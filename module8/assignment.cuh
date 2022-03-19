@@ -21,11 +21,11 @@ __constant__ const int c_FIND_MAX_CACHESIZE = 1024;
     This function finds the Max Magnitutde in the arr and inserts it in db[n]
         
     Constaints:
-        db must be n+2 in size as d[n] = max and d[n+1] = lock
+        db must be n+1 in size as d[n] = max 
         Will assert if __FIND_MAX_CACHESIZE__ < block size
 
 */
-__global__ void findMaxMag(int n, cuFloatComplex *arr, float *db);
+__global__ void findMaxMag(int n, cuFloatComplex *arr, float *db, int* mutex);
 
 
 __constant__ float c_dBAdjustment = 20.0;

@@ -1,10 +1,10 @@
 #include "assignment.cuh" // important globals are defined here read it
 
-__global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
+__global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db, int* mutex)
 {
     assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
     float *max = &db[n]; // db has a max and lock at the tail
-    int *mutex = (int*) &db[n+1]; 
+    //int *mutex = (int*) &db[n+1]; 
 
     unsigned idx = threadIdx.x + blockIdx.x*blockDim.x;
     unsigned stride = gridDim.x*blockIdx.x;
@@ -92,10 +92,11 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Starting FFT\n");
     cufftComplex *d_sig, *d_fft;
     float * d_db; 
+    int* d_mutex;
     checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
-    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // n+1 stores our max n+2 is lock;
-    checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n + 2) );
+    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 1) ); // n stores our max
+    checkCuda( cudaMalloc((void**)&d_mutex, sizeof(int)) ); // mutex
 
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
@@ -108,7 +109,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Starting kernels\n");
     // we have a FFT we need to normalize the db data;
     printf("find max\n");
-    checkCudaKernel( (findMaxMag<<<1,1024, 0, s>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (findMaxMag<<<1,1024, 0, s>>>(n, d_fft, d_db, d_mutex)) );
     printf("find amp\n");
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float) + 2); 
