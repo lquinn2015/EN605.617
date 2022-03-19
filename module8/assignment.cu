@@ -11,6 +11,10 @@ __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
     unsigned offset = 0;
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
     
+    if(threadIdx.x == 0) {
+        printf("My stride is %d\n", stride);
+    }
+    
     float tmp = -1.0;
     while(idx + offset < n){
         tmp = fmaxf(tmp, cuCabsf(arr[idx+offset]));
