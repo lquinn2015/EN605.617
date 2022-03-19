@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include "cuComplex.h"
 #include "cuda_utils.cuh"
-#include "cufft.h"
-
+#include <cufft.h>
 
 // globals
 static FILE* gnuplot;
@@ -61,9 +60,9 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s){
     
     cufftComplex *d_sig, *d_fft;
     float * d_db; 
-    checkCuda( cudaMallocAsync((void**)&d_sig, sizeof(cufftComplex) * n, s) );
-    checkCuda( cudaMallocAsync((void**)&d_fft, sizeof(cufftComplex) * n, s) );
-    checkCuda( cudaMallocAsync((void**)&d_db, sizeof(float) * n, s) );
+    checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
+    checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
+    checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n) );
 
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
@@ -87,8 +86,8 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s){
     fprintf(gnuplot, "e\n");
     
     checkCufft( cufftDestroy(plan) );
-    checkCuda( cudaFreeAsync(d_sig, s) );
-    checkCuda( cudaFreeAsync(d_fft, s) );
+    checkCuda( cudaFree(d_sig) );
+    checkCuda( cudaFree(d_fft) );
     free(db);
 
 }
