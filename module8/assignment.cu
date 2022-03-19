@@ -2,7 +2,7 @@
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
-    
+    if(threadIdx.x == 0) printf("Hello\n"); 
     assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
 
