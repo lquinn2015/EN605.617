@@ -56,7 +56,10 @@ void plot_xy_data(double* x, double *y, int n)
 
     
 // user job to insure that z[offset+n] does not overboubd 
-void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s){
+void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
+    float f_c, // freqency center 
+    float f_s  // sample rate 
+){
     
     printf("Starting FFT\n");
     cufftComplex *d_sig, *d_fft;
@@ -77,13 +80,22 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s){
     // we have a FFT we need to extract and plot the amplitude of it now
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float)); 
-    checkCuda( cudaMemcpyAsync(db, d_db, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
+    // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
+    checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
     
+    checkCuda( cudaMemcpyAsync(&db[n/2], &d_db[n/2], n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
 
     printf("Sync start\n");
     checkCuda( cudaStreamSynchronize(s) );
     printf("Sync Complete ploting now\n");
 
+    float Fc_Mhz = f_c / 10e6; // div by 10^6 to shift to mhz units
+    float Fs_Mhz = f_c / 10e6;
+
+    float lowF = Fc_Mhz - Fs_Mhz; 
+    float highF = Fc_Mhz + Fs_Mhz;
+
+    fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%1.f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
     fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
     for(int i = 0; i < n; i++){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
@@ -113,7 +125,7 @@ int main(int argc, char** argv)
 
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s));
-    create_fft(z, 5000, 0, s);
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
     
     
 
