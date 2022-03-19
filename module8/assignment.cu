@@ -193,10 +193,12 @@ int main(int argc, char** argv)
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s) );
     // FFT from actual data
+    printf("Calculating fft of normal IQ dat\n");
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
     free(z);
 
     // FFT from random noise
+    printf("Calculating fft of noise IQ dat\n");
     cuFloatComplex *noise = genNoise(s, 5000);
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6); 
 
