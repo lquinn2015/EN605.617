@@ -219,6 +219,7 @@ int main(int argc, char** argv)
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6);
     free(z);
 
     // FFT from random noise
