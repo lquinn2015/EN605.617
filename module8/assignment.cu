@@ -95,8 +95,8 @@ void plotfft(float f_c, float f_s, int n, float* db, const char* title){
     float highF = Fc_Mhz + Fs_Mhz/2;
     
     fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++);
-    fprintf(gnuplot, "set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
-    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 title %s \n", title);
+    fprintf(gnuplot, "set ylabel 'loss dB'; set xlabel 'freq Mhz'; set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
+    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 title '%s' \n", title);
     for(int i = 0; i < n; i++){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
     }
