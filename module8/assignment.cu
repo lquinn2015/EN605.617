@@ -1,8 +1,5 @@
 #include "assignment.cuh" // important globals are defined here read it
 
-__global__ void testKern(){
-    printf("hello from test kern\n");
-}
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
@@ -10,12 +7,8 @@ __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
 
     unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if(idx == 0) printf("Hello\n"); 
     unsigned stride = gridDim.x * blockDim.x;
     unsigned offset = 0;
-    if(threadIdx.x == 0) {
-        printf("My stride is %d and n is %d\n", stride, n);
-    }
     
     float *max = &db[n]; // db has a max at n
     int* mutex = (int*) &db[n+1]; // and lock at 0;
@@ -50,9 +43,7 @@ __global__ void fft2amp(int n, cuFloatComplex *fft, float *db)
     float dbMax = db[n];
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     unsigned stride = gridDim.x * blockDim.x;
-    if(threadIdx.x == 0) {
-        printf("My stride is %d\n", stride);
-    }
+    
     int idx = tid;
     while( idx < n){
         db[idx] = c_dBAdjustment * log10(cuCabsf(fft[idx])/dbMax) ;
