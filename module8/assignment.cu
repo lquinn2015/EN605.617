@@ -2,7 +2,7 @@
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
-    assert(c_FINDMAX_CACHESIZE >= blockDim.x);
+    assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
     float *max = &db[n]; // db has a max and lock at the tail
     int *mutex = (int*) &db[n+1]; 
 
