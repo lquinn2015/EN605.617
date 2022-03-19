@@ -6,20 +6,19 @@ __global__ void testKern(){
 
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
-    if(threadIdx.x == 0) printf("Hello\n"); 
-    assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
+    //assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
 
     unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if(idx == 0) printf("Hello\n"); 
     unsigned stride = gridDim.x * blockDim.x;
     unsigned offset = 0;
     if(threadIdx.x == 0) {
         printf("My stride is %d and n is %d\n", stride, n);
-
     }
     
     float *max = &db[n]; // db has a max at n
-    int* mutex = (int*) &db[n+1];
+    int* mutex = (int*) &db[n+1]; // and lock at 0;
     
     float tmp = -1.0;
     while(idx + offset < n){
@@ -131,8 +130,6 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // lock and max space
     checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
-
-    testKern<<<1,1,0,s>>>();    
 
     // setup FFT
     printf("Running FFT \n");
