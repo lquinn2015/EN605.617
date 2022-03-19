@@ -107,8 +107,9 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Starting kernel\n");
     // we have a FFT we need to normalize the db data;
     checkCudaKernel( (findMaxMag<<<2,1024, 1024*sizeof(float), s>>>(n, d_fft, d_db)) );
+    printf("Found the max\n");
     //checkCuda( cudaStreamSynchronize(s) ); we probably don't need this
-    checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );;
     float * db = (float*) malloc(n*sizeof(float)); 
     // db is display as  0,1,2..Fs/2 -Fs/2 ... -3 -2. -1 reorder it 
     checkCuda( cudaMemcpyAsync(db, &d_db[n/2], n/2*sizeof(float), cudaMemcpyDeviceToHost, s) );
