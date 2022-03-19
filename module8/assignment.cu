@@ -41,6 +41,9 @@ __global__ void fft2amp(int n, cuFloatComplex *fft, float *db)
     float dbMax = db[n];
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     unsigned stride = gridDim.x * blockDim.x;
+    if(threadIdx.x == 0) {
+        printf("My stride is %d\n", stride);
+    }
     int idx = tid;
     while( idx < n){
         db[idx] = c_dBAdjustment * log10(cuCabsf(fft[idx])/dbMax) ;
