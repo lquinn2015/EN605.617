@@ -84,7 +84,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s){
     checkCuda( cudaStreamSynchronize(s) );
     printf("Sync Complete ploting now\n");
 
-    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle");
+    fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 notitle\n");
     for(int i = 0; i < n; i++){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
     }
