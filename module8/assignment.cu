@@ -129,7 +129,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     printf("Running FFT \n");
     cufftHandle plan;
     checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
-    checkCufft( cufftSetStream(plan, s) );
+    //checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
 
     // we have a FFT we need to normalize the db data so it makes sense
