@@ -106,6 +106,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float f_s  // sample rate 
 ){
     
+    printf("Starting FFT\n");
     cufftComplex *d_sig, *d_fft;
     float * d_db; 
     
@@ -117,12 +118,14 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
     
     // setup FFT
+    printf("Running FFT \n");
     cufftHandle plan;
     checkCufft( cufftPlan1d(&plan, n, CUFFT_C2C, 1) ); // issuing 1 FFT of the size sample
     checkCufft( cufftSetStream(plan, s) );
     checkCufft( cufftExecC2C(plan, d_sig, d_fft, CUFFT_FORWARD) ); // execute the plan
 
     // we have a FFT we need to normalize the db data so it makes sense
+    printf("Running Fixup kernels \n");
     checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float) + 2); 
@@ -133,8 +136,10 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaStreamSynchronize(s) );
 
     // plot and release results
+    printf("plotting fft\n");
     plotfft(f_c,f_s, n, db);
 
+    printf("Free data\n");
     checkCufft( cufftDestroy(plan) );
     checkCuda( cudaFree(d_sig) );
     checkCuda( cudaFree(d_fft) );
