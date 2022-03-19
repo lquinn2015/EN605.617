@@ -193,9 +193,6 @@ cuFloatComplex* genNoise(cudaStream_t s, int n)
     checkCuda( cudaStreamSynchronize(s) );
 
     checkCuda( cudaFree(d_z) );
-    for(int i = n-10; i < n; i++){
-        printf("z = %f i*%f\n",  cuCrealf(z[i]), cuCimagf(z[i]));
-    }
     return z;
 }
 
@@ -225,6 +222,9 @@ int main(int argc, char** argv)
     printf("Gen noise\n");
     cuFloatComplex *noise = genNoise(s, 5000);
     printf("Calculating fft of noise IQ dat\n");
+    for(int i = 5000-10; i <5000; i++){
+        printf("z = %f i*%f\n",  cuCrealf(noise[i]), cuCimagf(noise[i]));
+    }
     create_fft(noise, 5000, 0, s, 100.122e6, 2.5e6); 
     
     free(noise);
