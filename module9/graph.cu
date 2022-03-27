@@ -46,6 +46,7 @@ void sssp_graph(const char* fname)
     char* line;
 
     int len = getline(&line, &linesize, fp); // reads one line
+    printf("%d=len %d=size\n", len, linesize);
     printf("%s\n", line); 
     if(len == -1){
         exit(-1); //error
