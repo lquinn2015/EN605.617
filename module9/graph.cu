@@ -46,6 +46,7 @@ void sssp_graph(const char* fname)
     char* line;
 
     int len = getline(&line, &linesize, fp); // reads one line
+    printf("%s\n", line); 
     if(len == -1){
         exit(-1); //error
     }
@@ -53,7 +54,6 @@ void sssp_graph(const char* fname)
     int n, nnz, ccol, vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;
     void **vertex_dim;
-    printf("%s\n", line); 
     sscanf((const char*)line, "%d %d %d", &n, &nnz, &ccol);
     printf("Graph #vert=%d, #edges=%d\n", n, nnz);
     
