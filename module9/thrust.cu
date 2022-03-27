@@ -68,9 +68,6 @@ void hello(int n) {
 void basicThrustTest(int n){
 
     // Given X,Y   compute  X = (X^2 + X - Y) % Y
-    double start = clock();
-    std::cout << "Thrust slow compute test\n" << std::endl;
-
     thrust::host_vector<int> H(n);
 
     thrust::generate(H.begin(), H.end(), rand);
@@ -81,9 +78,13 @@ void basicThrustTest(int n){
 
     thrust::device_vector<int> Z(n);
     
+    
     int sel = rand() % n; 
     std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
     std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
+    
+    double start = clock();
+    std::cout << "Thrust slow compute test\n" << std::endl;
  
     // Z = X*X
     thrust::transform(X.begin(), X.end(), 
@@ -130,15 +131,24 @@ struct fast_functor {
 void compoundThrustTest(int n){
 
     // Given X,Y   compute   (X^2 + X - Y) % Y
-    double start = clock();
-    std::cout << "Thrust fast compute test\n" << std::endl;
 
-    thrust::device_vector<int> X(n);
-    thrust::device_vector<int> Y(n);
+    thrust::host_vector<int> H(n);
+
+    thrust::generate(H.begin(), H.end(), rand);
+    thrust::device_vector<int> X = H;
+
+    thrust::generate(H.begin(), H.end(), rand);
+    thrust::device_vector<int> Y = H;
+
     thrust::device_vector<int> Z(n);
     
-    thrust::generate(X.begin(), X.end(), rand);
-    thrust::generate(Y.begin(), Y.end(), rand);
+
+    int sel = rand() % n; 
+    std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
+    std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
+    
+    double start = clock();
+    std::cout << "Thrust fast compute test\n" << std::endl;
 
     thrust::transform(X.begin(), X.end(),
         Y.begin(),
@@ -146,7 +156,6 @@ void compoundThrustTest(int n){
         fast_functor()
     );
     
-    int sel = rand() % n; 
     std::cout << "Z[" << sel << "] = " << Z[sel] << std::endl; 
     
     double diff = clock() - start;
