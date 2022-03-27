@@ -38,39 +38,12 @@ struct argp_option options[] =
     { 0 }
 };
 
-void hello(int n) {
-
-    thrust::host_vector<int> H(n);
-    H[0] = 1;
-    H[4] = 4;
-    std::cout << "H[4]=" << H[4] << " overall H has len=" << H.size() << std::endl; 
-
-    thrust::device_vector<int> D = H;
-    D[4] = 8;
-    std::cout << "D[0]=" << D[0] << " overall D has len=" << D.size() << std::endl; 
-    std::cout << "D[4]=" << D[4] << " overall D has len=" << D.size() << std::endl; 
-
-    thrust::device_vector<int> C(n);
-    C[4] = 9;
-    std::cout << "C[4]=" << C[4] << " overall C has len=" << C.size() << std::endl; 
-
-    thrust::generate(H.begin(), H.end(), rand);
-    std::cout << "H[4]=" << H[4] << " overall H has len=" << H.size() << std::endl; 
-    
-    D = H;
-    std::cout << "D[0]=" << D[0] << " overall D has len=" << D.size() << std::endl; 
-    std::cout << "D[4]=" << D[4] << " overall D has len=" << D.size() << std::endl; 
-
-    return;
-
-}
-
 void basicThrustTest(int n){
 
     // Given X,Y   compute  X = (X^2 + X - Y) % Y
     thrust::host_vector<int> H(n);
 
-    thrust::generate(H.begin(), H.end(), rand);
+    thrust::generate(H.begin(), H.end(), rand); // generate vectors on host
     thrust::device_vector<int> X = H;
 
     thrust::generate(H.begin(), H.end(), rand);
@@ -79,12 +52,12 @@ void basicThrustTest(int n){
     thrust::device_vector<int> Z(n);
     
     
-    int sel = rand() % n; 
+    int sel = rand() % n;  // display vectors selected valued
     std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
     std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
     
-    double start = clock();
-    std::cout << "Thrust slow compute test\n" << std::endl;
+    double start = clock(); // start timing after to compare a compact functor verse
+    std::cout << "Thrust slow compute test\n" << std::endl; // a non compact series
  
     // Z = X*X
     thrust::transform(X.begin(), X.end(), 
@@ -120,8 +93,8 @@ void basicThrustTest(int n){
     return;
 }
 
+// by streamlining the kernel of the functor we execute faster
 struct fast_functor {
-    
     __host__ __device__
         float operator()(const int &x, const int &y) const{
             return (x*x + x - y ) % y;
@@ -134,7 +107,7 @@ void compoundThrustTest(int n){
 
     thrust::host_vector<int> H(n);
 
-    thrust::generate(H.begin(), H.end(), rand);
+    thrust::generate(H.begin(), H.end(), rand); // generate with rand on host side
     thrust::device_vector<int> X = H;
 
     thrust::generate(H.begin(), H.end(), rand);
@@ -143,11 +116,11 @@ void compoundThrustTest(int n){
     thrust::device_vector<int> Z(n);
     
 
-    int sel = rand() % n; 
+    int sel = rand() % n;  // display selcted values
     std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
     std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
     
-    double start = clock();
+    double start = clock(); // start timing after generation
     std::cout << "Thrust fast compute test\n" << std::endl;
 
     thrust::transform(X.begin(), X.end(),
@@ -170,7 +143,6 @@ int main(int argc, char **argv){
     srand(time(NULL));
     int n = problem_size;
 
-    hello(n);
     basicThrustTest(n);
     compoundThrustTest(n);
 
