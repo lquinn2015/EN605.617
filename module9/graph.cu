@@ -16,8 +16,8 @@ void check(nvgraphStatus_t status){
 void readGraph(FILE *fp, float *val, int *dest, int *src)
 {
 
-    char *line;
-    size_t amt;
+    char *line = NULL;
+    size_t amt = 0;
     float w_i; int w_idx=0;
     int d_l=-1, d_i, d_idx = 0;
     int s_i, s_idx=0;
@@ -33,6 +33,7 @@ void readGraph(FILE *fp, float *val, int *dest, int *src)
         val[w_idx++] = w_i;
         src[s_idx++] = s_i;
     }
+    printf("w_idx=s_idx=%d, and d_idx=%d\n", w_idx, d_idx);
     return;
 }
 
@@ -41,12 +42,10 @@ void sssp_graph(const char* fname)
 {
     printf("Starting sssp\n");
     FILE* fp = fopen(fname, "r");
-    printf("fd = %llx\n", fp);
-    size_t linesize;
+    size_t linesize = 0;
     char* line = NULL;
 
     int len = getline(&line, &linesize, fp); // reads one line
-    printf("%d=len %d=size\n", len, linesize);
     if(len == -1){
         exit(-1); //error
     }
@@ -73,7 +72,7 @@ void sssp_graph(const char* fname)
     vertex_dim[0] = (void*) sssp_1_h; vertex_dimT[0] = CUDA_R_32F;
     
     float *weights = (float*) malloc(nnz * sizeof(float));
-    int *dest = (int*) malloc(ccol*sizeof(float));
+    int *dest = (int*) malloc((ccol+1)*sizeof(float));
     int *src = (int*) malloc(nnz*sizeof(float));
     readGraph(fp, weights, dest, src);
     printf("Graph IO complete running nvgraph now\n");
