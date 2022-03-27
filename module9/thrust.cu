@@ -57,7 +57,7 @@ void hello(int n) {
     thrust::generate(H.begin(), H.end(), rand);
     std::cout << "H[4]=" << H[4] << " overall H has len=" << H.size() << std::endl; 
     
-    thrust::generate(D.begin(), D.end(), rand);
+    D = H;
     std::cout << "D[0]=" << D[0] << " overall D has len=" << D.size() << std::endl; 
     std::cout << "D[4]=" << D[4] << " overall D has len=" << D.size() << std::endl; 
 
