@@ -49,9 +49,13 @@ void basicThrustTest(int n){
     thrust::device_vector<int> Y(n);
     thrust::device_vector<int> Z(n);
     
+    int sel = rand() % n; 
     thrust::generate(X.begin(), X.end(), rand);
     thrust::generate(Y.begin(), Y.end(), rand);
-    
+   
+    std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
+    std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
+ 
     // Z = X*X
     thrust::transform(X.begin(), X.end(), 
         X.begin(), 
@@ -78,10 +82,7 @@ void basicThrustTest(int n){
         thrust::modulus<int>()
     );
 
-    thrust::host_vector<int> H = Z;
-   
-    int sel = rand() % n; 
-    std::cout << "Z[" << sel << "] = " << H[sel] << std::endl; 
+    std::cout << "Z[" << sel << "] = " << Z[sel] << std::endl; 
  
     double diff = clock() - start;
     std::cout << "basic test Time spent " << diff << std::endl;
@@ -131,13 +132,8 @@ int main(int argc, char **argv){
     srand(time(NULL));
     int n = problem_size;
 
-    try {
-        basicThrustTest(n);
-        compoundThrustTest(n);
-    } 
-    catch(thrust::system_error e) {
-        std::cerr << "Error for something: " << e.what() << std.endl; 
-    }
+    basicThrustTest(n);
+    compoundThrustTest(n);
 
     return 0 ;
 }
