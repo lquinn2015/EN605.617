@@ -43,14 +43,14 @@ void sssp_graph(const char* fname)
     FILE* fp = fopen(fname, "r");
     printf("fd = %llx\n", fp);
     size_t linesize;
-    char* line;
+    char* line = NULL;
 
     int len = getline(&line, &linesize, fp); // reads one line
     printf("%d=len %d=size\n", len, linesize);
-    printf("%s\n", line); 
     if(len == -1){
         exit(-1); //error
     }
+    printf("%s\n", line); 
 
     int n, nnz, ccol, vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;
