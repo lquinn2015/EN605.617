@@ -78,9 +78,10 @@ void basicThrustTest(int n){
         thrust::modulus<int>()
     );
 
+    thrust::host_vector<int> H = Z;
    
     int sel = rand() % n; 
-    std::cout << "Z[" << sel << "] = " << Z[sel] << std::endl; 
+    std::cout << "Z[" << sel << "] = " << H[sel] << std::endl; 
  
     double diff = clock() - start;
     std::cout << "basic test Time spent " << diff << std::endl;
