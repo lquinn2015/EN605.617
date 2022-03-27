@@ -82,9 +82,6 @@ void basicThrustTest(int n){
     thrust::device_vector<int> Z(n);
     
     int sel = rand() % n; 
-    thrust::generate(X.begin(), X.end(), rand);
-    thrust::generate(Y.begin(), Y.end(), rand);
-   
     std::cout << "X[" << sel << "] = " << X[sel] << std::endl;
     std::cout << "Y[" << sel << "] = " << Y[sel] << std::endl;
  
