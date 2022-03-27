@@ -38,6 +38,16 @@ struct argp_option options[] =
     { 0 }
 };
 
+void hello(int n) {
+
+    thrust::host_vector<int> H(n);
+    H[0] = 1;
+    H[4] = 4;
+    std::cout << "H[4]=" << H[4] << " overall H has len=" << H.size() << std::endl; 
+
+    return;
+
+}
 
 void basicThrustTest(int n){
 
@@ -138,6 +148,7 @@ int main(int argc, char **argv){
     srand(time(NULL));
     int n = problem_size;
 
+    hello(n);
     basicThrustTest(n);
     compoundThrustTest(n);
 
