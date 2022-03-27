@@ -11,7 +11,7 @@ void parse_opts(int argc, char **argv,
 
     int opt; 
      
-    while ((opt = getopt(argc, argv, "pb")) != 0) {
+    while ((opt = getopt(argc, argv, "pb:")) != -1) {
 
         switch(opt) {
             case 'b' : {
@@ -112,8 +112,8 @@ void compoundThrustTest(int n){
 int main(int argc, char **argv){
 
     int blocksize, n;
-    std::cout << "testing" << std::endl;
     parse_opts(argc, argv, &blocksize, &n);
+    std::cout << "testing" << std::endl;
 
     basicThrustTest(n);
     compoundThrustTest(n);
