@@ -45,6 +45,12 @@ void hello(int n) {
     H[4] = 4;
     std::cout << "H[4]=" << H[4] << " overall H has len=" << H.size() << std::endl; 
 
+    thrust::device_vector<int> D = H;
+    d[4] = 8;
+    std::cout << "D[4]=" << D[4] << " overall D has len=" << D.size() << std::endl; 
+
+    
+
     return;
 
 }
