@@ -9,7 +9,7 @@ a1 = thrust.exe
 a2 = nvgraph.exe
 
 
-all: $(a1) $(a2)
+all: clean $(a1) $(a2) 
 	echo "$(a1) and $(a2) tests have run"
 
 $(a1): $(UTIL_SOURCE) $(TSRC)

@@ -4,9 +4,9 @@ BEGIN {
     curr=0
 }
 
-/thrust\.exe/ {
+/n =/ {
     ++curr
-    wsize[curr]=sub("/-p/","",$2)
+    wsize[curr]=$3
 }
 
 /basic test/ {
