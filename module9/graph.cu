@@ -54,6 +54,7 @@ void sssp_graph(const char* fname)
     void **vertex_dim;
     
     sscanf((const char*)line, "%d %d %d", &n, &nnz, &ccol);
+    printf("Graph #vert=%d, #edges=%d\n", n, nnz);
     
     //nvgraph varibles
     nvgraphHandle_t handle;
@@ -73,7 +74,8 @@ void sssp_graph(const char* fname)
     int *dest = (int*) malloc(ccol*sizeof(float));
     int *src = (int*) malloc(nnz*sizeof(float));
     readGraph(fp, weights, dest, src);
-    
+    printf("Graph IO complete running nvgraph now\n");
+     
     check( nvgraphCreate(&handle));
     check( nvgraphCreateGraphDescr(handle, &graph));
     CSC_input->nvertices = n; CSC_input->nedges = nnz;

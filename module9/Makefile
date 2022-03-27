@@ -1,6 +1,6 @@
 
 UTIL_SOURCE = ../utils/cuda_utils.cu 
-INCLUDES = -I../utils/ -lcuda -lcudart -lcufft 
+INCLUDES = -I../utils/ -I../common/inc/ -lcuda -lcudart -lcufft -lnvgraph
 
 TSRC = thrust.cu
 GSRC = graph.cu
@@ -28,7 +28,7 @@ $(r1): $(UTIL_SOURCE) $(TSRC)
 
 $(r2): $(UTIL_SOURCE) $(GSRC)
 	nvcc $(INCLUDES) $(UTIL_SOURCE) $(GSRC) -ccbin g++ -o $(a2)
-	./a2
+	./$(a2)
 
 clean: 
 	rm $(a1) $(a2)
