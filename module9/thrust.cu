@@ -130,7 +130,14 @@ int main(int argc, char **argv){
     argp_parse(&argp, argc, argv, 0, 0, 0);
     srand(time(NULL));
     int n = problem_size;
-    basicThrustTest(n);
-    compoundThrustTest(n);
 
+    try {
+        basicThrustTest(n);
+        compoundThrustTest(n);
+    } 
+    catch(thrust::system_error e) {
+        std::cerr << "Error for something: " << e.what() << std.endl; 
+    }
+
+    return 0 ;
 }
