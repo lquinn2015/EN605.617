@@ -66,7 +66,7 @@ void basicThrustTest(int n){
     );
 
    
-    int sel = Z.size() -1; 
+    int sel = rand() % n; 
     std::cout << "Z[" << sel << "] = " << Z[sel] << std::endl; 
  
     double diff = clock() - start;
@@ -102,7 +102,7 @@ void compoundThrustTest(int n){
         fast_functor()
     );
     
-    int sel = Z.size() -1; 
+    int sel = rand() % n; 
     std::cout << "Z[" << sel << "] = " << Z[sel] << std::endl; 
     
     double diff = clock() - start;
