@@ -45,8 +45,14 @@ void basicThrustTest(int n){
     double start = clock();
     std::cout << "Thrust slow compute test\n" << std::endl;
 
-    thrust::device_vector<int> X(n);
-    thrust::device_vector<int> Y(n);
+    thrust::host_vector<int> H(n);
+
+    thrust::generate(H.begin(), H.end(), rand);
+    thrust::device_vector<int> X = H;
+
+    thrust::generate(H.begin(), H.end(), rand);
+    thrust::device_vector<int> Y = H;
+
     thrust::device_vector<int> Z(n);
     
     int sel = rand() % n; 
@@ -135,5 +141,5 @@ int main(int argc, char **argv){
     basicThrustTest(n);
     compoundThrustTest(n);
 
-    return 0 ;
+    return 0;
 }
