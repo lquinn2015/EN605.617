@@ -36,8 +36,8 @@ void basicThrustTest(int n){
     thrust::device_vector<int> Y(n);
     thrust::device_vector<int> Z(n);
     
-    thrust::sequence(X.begin(), X.end());
-    thrust::fill(Y.begin(), Y.end(), 22);
+    thrust::generate(X.begin(), X.end(), rand);
+    thrust::generate(Y.begin(), Y.end(), rand);
     
     // Z = X*X
     thrust::transform(X.begin(), X.end(), 
@@ -93,8 +93,9 @@ void compoundThrustTest(int n){
     thrust::device_vector<int> Y(n);
     thrust::device_vector<int> Z(n);
     
-    thrust::sequence(X.begin(), X.end());
-    thrust::fill(Y.begin(), Y.end(), 22);
+    thrust::generate(X.begin(), X.end(), rand);
+    thrust::generate(Y.begin(), Y.end(), rand);
+
     thrust::transform(X.begin(), X.end(),
         Y.begin(),
         Z.begin(),
@@ -114,6 +115,7 @@ int main(int argc, char **argv){
     int blocksize, n;
     parse_opts(argc, argv, &blocksize, &n);
     std::cout << "testing" << std::endl;
+    srand(time(NULL));
 
     basicThrustTest(n);
     compoundThrustTest(n);
