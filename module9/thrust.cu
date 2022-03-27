@@ -2,29 +2,42 @@
 #include <iostream>
 #include <stdlib.h>
 #include "cuda_utils.cuh"
-#include <getopt.h>
+#include <argp.h>
 
-void parse_opts(int argc, char **argv, 
-    int *blksize, // block size 
-     int *n)      // problem size
+
+static int problem_size = 0;
+static int blocksize;
+
+static int parse_opt(int key, char *arg, struct argp_state *state)
 {
 
-    int opt; 
-     
-    while ((opt = getopt(argc, argv, "pb:")) != -1) {
-
-        switch(opt) {
-            case 'b' : {
-                *blksize = atoi(optarg);
-                break;
-            } case 'p' : {
-                *n = atoi(optarg);
-                break;
-            } default :
-                break;
-        }
+    if( arg == NULL) {
+        return 0;
     }
+
+    switch (key) {
+        
+        case 'p': {
+            problem_size = atoi(arg);
+            printf("n = %d\n", problem_size);
+            break; 
+        } case 'b' : {
+            blocksize = atoi(arg);
+            printf("blocksize = %d\n", blocksize);
+            break;
+        }
+
+    }
+    return 0;
 }
+
+struct argp_option options[] = 
+{
+    {"size", 'p', "NUM", OPTION_ARG_OPTIONAL, "Problem size to work on"},
+    {"bsize", 'b', "NUM", OPTION_ARG_OPTIONAL, "Block size"},
+    { 0 }
+};
+
 
 void basicThrustTest(int n){
 
@@ -112,11 +125,10 @@ void compoundThrustTest(int n){
 
 int main(int argc, char **argv){
 
-    int blocksize, n;
-    parse_opts(argc, argv, &blocksize, &n);
-    std::cout << "testing" << std::endl;
+    struct argp argp = {options, parse_opt, 0, 0};
+    argp_parse(&argp, argc, argv, 0, 0, 0);
     srand(time(NULL));
-
+    int n = problem_size;
     basicThrustTest(n);
     compoundThrustTest(n);
 
