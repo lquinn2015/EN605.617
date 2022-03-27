@@ -39,7 +39,7 @@ void readGraph(FILE *fp, float *val, int *dest, int *src)
 
 void sssp_graph(const char* fname)
 {
-
+    printf("Starting sssp\n");
     FILE* fp = fopen(fname, "r");
     size_t linesize;
     char* line;
