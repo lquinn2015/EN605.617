@@ -41,6 +41,7 @@ void sssp_graph(const char* fname)
 {
     printf("Starting sssp\n");
     FILE* fp = fopen(fname, "r");
+    printf("fd = %llx\n", fp);
     size_t linesize;
     char* line;
 
