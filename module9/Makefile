@@ -3,7 +3,7 @@ UTIL_SOURCE = ../utils/cuda_utils.cu
 INCLUDES = -I../utils/ -lcuda -lcudart -lcufft 
 
 TSRC = thrust.cu
-GSRC = 
+GSRC = graph.cu
 
 r1 = thrust
 a1 = thrust.exe
@@ -11,7 +11,7 @@ r2 = nvgraph
 a2 = nvgraph.exe
 
 
-all: $(r1) $(r2) 
+all: $(r2) $(r1) 
 	echo "$(a1) and $(a2) tests have run"
 
 $(r1): $(UTIL_SOURCE) $(TSRC)
@@ -27,7 +27,8 @@ $(r1): $(UTIL_SOURCE) $(TSRC)
 	
 
 $(r2): $(UTIL_SOURCE) $(GSRC)
-	echo "Skip for now"
+	nvcc $(INCLUDES) $(UTIL_SOURCE) $(GSRC) -ccbin g++ -o $(a2)
+	./a2
 
 clean: 
 	rm $(a1) $(a2)
