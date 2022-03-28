@@ -56,7 +56,7 @@ void sssp_graph(const char* fname)
     void **vertex_dim;
     sscanf((const char*)line, "%d %d %d", &n, &nnz, &ccol);
     printf("Graph #vert=%d, #edges=%d\n", n, nnz);
-    
+    nnz *=2; 
     //nvgraph varibles
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
