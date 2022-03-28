@@ -79,35 +79,37 @@ void sssp_graph(const char* fname)
     int *src = (int*) malloc(nnz*sizeof(float));
     //readGraph(fp, weights, dest, src);
 
- weights_h [0] = 0.333333;
-    weights_h [1] = 0.500000;
-    weights_h [2] = 0.333333;
-    weights_h [3] = 0.500000;
-    weights_h [4] = 0.500000;
-    weights_h [5] = 1.000000;
-    weights_h [6] = 0.333333;
-    weights_h [7] = 0.500000;
-    weights_h [8] = 0.500000;
-    weights_h [9] = 0.500000;
+    
 
-    destination_offsets_h [0] = 0;
-    destination_offsets_h [1] = 1;
-    destination_offsets_h [2] = 3;
-    destination_offsets_h [3] = 4;
-    destination_offsets_h [4] = 6;
-    destination_offsets_h [5] = 8;
-    destination_offsets_h [6] = 10;
+    weights [0] = 0.333333;
+    weights [1] = 0.500000;
+    weights [2] = 0.333333;
+    weights [3] = 0.500000;
+    weights [4] = 0.500000;
+    weights [5] = 1.000000;
+    weights [6] = 0.333333;
+    weights [7] = 0.500000;
+    weights [8] = 0.500000;
+    weights [9] = 0.500000;
 
-    source_indices_h [0] = 2;
-    source_indices_h [1] = 0;
-    source_indices_h [2] = 2;
-    source_indices_h [3] = 0;
-    source_indices_h [4] = 4;
-    source_indices_h [5] = 5;
-    source_indices_h [6] = 2;
-    source_indices_h [7] = 3;
-    source_indices_h [8] = 3;
-    source_indices_h [9] = 4;
+    dest [0] = 0;
+    dest [1] = 1;
+    dest [2] = 3;
+    dest [3] = 4;
+    dest [4] = 6;
+    dest [5] = 8;
+    dest [6] = 10;
+
+    src [0] = 2;
+    src [1] = 0;
+    src [2] = 2;
+    src [3] = 0;
+    src [4] = 4;
+    src [5] = 5;
+    src [6] = 2;
+    src [7] = 3;
+    src [8] = 3;
+    src [9] = 4;
 
     printf("Graph IO complete running nvgraph now\n");
      
