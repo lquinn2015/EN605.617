@@ -32,6 +32,7 @@ void readGraph(FILE *fp, float *val, int *dest, int *src)
         }
         val[w_idx++] = w_i;
         src[s_idx++] = s_i;
+        printf("%d->%d  with weight %f\n", s_i, d_i, w_i);
     }
     printf("w_idx=s_idx=%d, and d_idx=%d\n", w_idx, d_idx);
     return;
@@ -57,9 +58,6 @@ void sssp_graph(const char* fname)
     sscanf((const char*)line, "%d %d %d", &n, &nnz, &ccol);
     printf("Graph #vert=%d, #edges=%d\n", n, nnz);
     nnz *=2; 
-
-    n = 6; nnz = 10;
-
     //nvgraph varibles
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
@@ -77,40 +75,8 @@ void sssp_graph(const char* fname)
     float *weights = (float*) malloc(nnz * sizeof(float));
     int *dest = (int*) malloc((ccol+1)*sizeof(float));
     int *src = (int*) malloc(nnz*sizeof(float));
-    //readGraph(fp, weights, dest, src);
-
+    readGraph(fp, weights, dest, src);
     
-
-    weights [0] = 0.333333;
-    weights [1] = 0.600000;
-    weights [2] = 0.333333;
-    weights [3] = 0.300000;
-    weights [4] = 0.900000;
-    weights [5] = 1.000000;
-    weights [6] = 0.333333;
-    weights [7] = 0.800000;
-    weights [8] = 0.300000;
-    weights [9] = 0.100000;
-
-    dest [0] = 0;
-    dest [1] = 1;
-    dest [2] = 3;
-    dest [3] = 4;
-    dest [4] = 6;
-    dest [5] = 8;
-    dest [6] = 10;
-
-    src [0] = 2;  
-    src [1] = 0;
-    src [2] = 2;
-    src [3] = 0;
-    src [4] = 4;
-    src [5] = 5;
-    src [6] = 2;
-    src [7] = 3;
-    src [8] = 3;
-    src [9] = 4;
-
     printf("Graph IO complete running nvgraph now\n");
      
     check( nvgraphCreate(&handle));
