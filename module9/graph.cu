@@ -82,15 +82,15 @@ void sssp_graph(const char* fname)
     
 
     weights [0] = 0.333333;
-    weights [1] = 0.500000;
+    weights [1] = 0.600000;
     weights [2] = 0.333333;
-    weights [3] = 0.500000;
-    weights [4] = 0.500000;
+    weights [3] = 0.300000;
+    weights [4] = 0.900000;
     weights [5] = 1.000000;
     weights [6] = 0.333333;
-    weights [7] = 0.500000;
-    weights [8] = 0.500000;
-    weights [9] = 0.500000;
+    weights [7] = 0.800000;
+    weights [8] = 0.300000;
+    weights [9] = 0.100000;
 
     dest [0] = 0;
     dest [1] = 1;
@@ -100,7 +100,7 @@ void sssp_graph(const char* fname)
     dest [5] = 8;
     dest [6] = 10;
 
-    src [0] = 2;
+    src [0] = 2;  
     src [1] = 0;
     src [2] = 2;
     src [3] = 0;
