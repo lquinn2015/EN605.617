@@ -76,7 +76,9 @@ void sssp_graph(const char* fname)
     int *dest = (int*) malloc((ccol+1)*sizeof(float));
     int *src = (int*) malloc(nnz*sizeof(float));
     readGraph(fp, weights, dest, src);
-    
+   
+    dest[ccol] = nnz;
+ 
     printf("Graph IO complete running nvgraph now\n");
      
     check( nvgraphCreate(&handle));
