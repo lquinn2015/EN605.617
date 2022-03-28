@@ -57,6 +57,9 @@ void sssp_graph(const char* fname)
     sscanf((const char*)line, "%d %d %d", &n, &nnz, &ccol);
     printf("Graph #vert=%d, #edges=%d\n", n, nnz);
     nnz *=2; 
+
+    n = 6; nnz = 10;
+
     //nvgraph varibles
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
@@ -74,7 +77,38 @@ void sssp_graph(const char* fname)
     float *weights = (float*) malloc(nnz * sizeof(float));
     int *dest = (int*) malloc((ccol+1)*sizeof(float));
     int *src = (int*) malloc(nnz*sizeof(float));
-    readGraph(fp, weights, dest, src);
+    //readGraph(fp, weights, dest, src);
+
+ weights_h [0] = 0.333333;
+    weights_h [1] = 0.500000;
+    weights_h [2] = 0.333333;
+    weights_h [3] = 0.500000;
+    weights_h [4] = 0.500000;
+    weights_h [5] = 1.000000;
+    weights_h [6] = 0.333333;
+    weights_h [7] = 0.500000;
+    weights_h [8] = 0.500000;
+    weights_h [9] = 0.500000;
+
+    destination_offsets_h [0] = 0;
+    destination_offsets_h [1] = 1;
+    destination_offsets_h [2] = 3;
+    destination_offsets_h [3] = 4;
+    destination_offsets_h [4] = 6;
+    destination_offsets_h [5] = 8;
+    destination_offsets_h [6] = 10;
+
+    source_indices_h [0] = 2;
+    source_indices_h [1] = 0;
+    source_indices_h [2] = 2;
+    source_indices_h [3] = 0;
+    source_indices_h [4] = 4;
+    source_indices_h [5] = 5;
+    source_indices_h [6] = 2;
+    source_indices_h [7] = 3;
+    source_indices_h [8] = 3;
+    source_indices_h [9] = 4;
+
     printf("Graph IO complete running nvgraph now\n");
      
     check( nvgraphCreate(&handle));
@@ -112,7 +146,7 @@ void sssp_graph(const char* fname)
 int main()
 {    
     sssp_graph("csc1.lsv");
-    sssp_graph("csc2.lsv");
-    sssp_graph("csc3.lsv");
+    //sssp_graph("csc2.lsv");
+    //sssp_graph("csc3.lsv");
     return 0;
 }
