@@ -94,7 +94,9 @@ void sssp_graph(const char* fname)
     check( nvgraphSssp(handle, graph, 0, &src_vert, 0));
     // get and print results
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
-    printf("Cost to get from 0->2 was %f\n", sssp_1_h[2]);
+    for(int x = 0; x < n; x++){
+        printf("Cost to get from 0->%d was %f\n", x, sssp_1_h[x]);
+    }
 
     // free data
     free(sssp_1_h); free(vertex_dim);
