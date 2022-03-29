@@ -13,6 +13,22 @@ void check(nvgraphStatus_t status){
 }
 
 
+/*
+    We need to read in CSC = compressed sparse column format
+
+        Val = just the weigths
+        row = src = row index of each value
+        col = dest = col ptr. I.e the pointer to when a column is used is of size n << nnz
+            If you have this matix
+            [[ 1 0 4]
+             [ 2 0 0]
+             [ 0 3 0]]
+            val = [1 2 3 4]
+            row = [ 1 2 3 1]
+            col = [0 2 3 4]   the tail 4 is # of elems 
+        
+*/
+
 void readGraph(FILE *fp, float *val, int *dest, int *src)
 {
 
@@ -27,14 +43,13 @@ void readGraph(FILE *fp, float *val, int *dest, int *src)
         sscanf(line, "%f %d %d", &w_i, &s_i, &d_i); // parse line
         if(d_idx == 0 || d_l != d_i)
         {
-            dest[d_idx++] = d_i;
+            dest[d_idx++] = w_idx;
             d_l = d_i;  
         }
         val[w_idx++] = w_i;
         src[s_idx++] = s_i;
-        printf("%d->%d  with weight %f\n", s_i, d_i, w_i);
     }
-    printf("w_idx=s_idx=%d, and d_idx=%d\n", w_idx, d_idx);
+    
     return;
 }
 
