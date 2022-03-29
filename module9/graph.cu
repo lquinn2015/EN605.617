@@ -95,7 +95,8 @@ void sssp_graph(const char* fname)
     dest[ccol] = nnz;
  
     printf("Graph IO complete running nvgraph now\n");
-     
+    double start = time(NULL);
+ 
     check( nvgraphCreate(&handle));
     check( nvgraphCreateGraphDescr(handle, &graph));
     CSC_input->nvertices = n; CSC_input->nedges = nnz;
@@ -116,6 +117,8 @@ void sssp_graph(const char* fname)
     for(int x = 0; x < n; x++){
         printf("Cost to get from 0->%d was %f\n", x, sssp_1_h[x]);
     }
+    
+    printf("%s graph took %f", fname, time(NULL)-start);
 
     // free data
     free(sssp_1_h); free(vertex_dim);
@@ -131,7 +134,7 @@ void sssp_graph(const char* fname)
 int main()
 {    
     sssp_graph("csc1.lsv");
-    //sssp_graph("csc2.lsv");
-    //sssp_graph("csc3.lsv");
+    sssp_graph("csc2.lsv");
+    sssp_graph("csc3.lsv");
     return 0;
 }
