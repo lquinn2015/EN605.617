@@ -57,6 +57,7 @@ void readGraph(FILE *fp, float *val, int *dest, int *src)
 void sssp_graph(const char* fname)
 {
     printf("Starting sssp\n");
+    double start = time(NULL);
     FILE* fp = fopen(fname, "r");
     size_t linesize = 0;
     char* line = NULL;
@@ -95,7 +96,6 @@ void sssp_graph(const char* fname)
     dest[ccol] = nnz;
  
     printf("Graph IO complete running nvgraph now\n");
-    double start = time(NULL);
  
     check( nvgraphCreate(&handle));
     check( nvgraphCreateGraphDescr(handle, &graph));
