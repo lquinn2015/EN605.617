@@ -1,18 +1,26 @@
 
 UTIL_SOURCE = ../utils/cuda_utils.cu 
 INCLUDES = -I../utils/ -I../common/inc/ -lcuda -lcudart -lcufft -lnvgraph
+NPP_INCLUDES = -L./common/FreeImage/lib/ -L./common/FreeImage/lib/linux -L./common/FreeImage/lib/linux/x86_64 -lnppi_static -lnppc_static -lculibos -lfreeimage -I./common/UtilNPP -I./common/FreeImage/include/
+
 
 TSRC = thrust.cu
 GSRC = graph.cu
+NSRC = npp.cu
 
 r1 = thrust
 a1 = thrust.exe
 r2 = nvgraph
 a2 = nvgraph.exe
+r3 = npp
+a3 = npp.exe
 
+all: $(r3) $(r2) $(r1) 
+	echo "$(a1) and $(a2) and $(a3) tests have run"
 
-all: $(r2) $(r1) 
-	echo "$(a1) and $(a2) tests have run"
+$(r3): $(UTIL_SOURC) $(NSRC)
+	nvcc $(INCLUDES) $(NPP_INCLUDES) $(UTIL_SOURCE) $(NSRC) -ccbin g++ -o $(a3)
+
 
 $(r1): $(UTIL_SOURCE) $(TSRC)
 	nvcc $(INCLUDES) $(UTIL_SOURCE) $(TSRC) -ccbin g++ -o $(a1)
