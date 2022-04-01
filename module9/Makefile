@@ -39,5 +39,5 @@ $(r2): $(UTIL_SOURCE) $(GSRC)
 	./$(a2)
 
 clean: 
-	rm $(a1) $(a2)
+	rm $(a1) $(a2) $(a3)
 
