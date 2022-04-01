@@ -20,7 +20,7 @@ all: $(r3) $(r2) $(r1)
 
 $(r3): $(UTIL_SOURC) $(NSRC)
 	nvcc $(INCLUDES) $(NPP_INCLUDES) $(UTIL_SOURCE) $(NSRC) -ccbin g++ -o $(a3)
-	./$(a3)
+	./$(a3) > npp.out
 
 $(r1): $(UTIL_SOURCE) $(TSRC)
 	nvcc $(INCLUDES) $(UTIL_SOURCE) $(TSRC) -ccbin g++ -o $(a1)
@@ -36,7 +36,7 @@ $(r1): $(UTIL_SOURCE) $(TSRC)
 
 $(r2): $(UTIL_SOURCE) $(GSRC)
 	nvcc $(INCLUDES) $(UTIL_SOURCE) $(GSRC) -ccbin g++ -o $(a2)
-	./$(a2)
+	./$(a2) > graph.out
 
 clean: 
 	rm $(a1) $(a2) $(a3)
