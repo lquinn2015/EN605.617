@@ -20,7 +20,7 @@ all: $(r3) $(r2) $(r1)
 
 $(r3): $(UTIL_SOURC) $(NSRC)
 	nvcc $(INCLUDES) $(NPP_INCLUDES) $(UTIL_SOURCE) $(NSRC) -ccbin g++ -o $(a3)
-
+	./$(a3)
 
 $(r1): $(UTIL_SOURCE) $(TSRC)
 	nvcc $(INCLUDES) $(UTIL_SOURCE) $(TSRC) -ccbin g++ -o $(a1)
