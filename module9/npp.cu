@@ -73,8 +73,8 @@ int main(int argc, char* argv[]){
         NPP_CHECK_NPP(nppiFilterCannyBorderGetBufferSize(oSizeROI, &nBufferSize));
         checkCuda( cudaMalloc((void**)&pScratchBufferNPP, nBufferSize) );
         
-        Npp16s nLowThreshold = 72;
-        Npp16s nHighThreshold = 256; 
+        Npp16s nLowThreshold = 12451;
+        Npp16s nHighThreshold = 2621; 
     
         // run the filter
         if((nBufferSize > 0) && (pScratchBufferNPP != 0)) {
