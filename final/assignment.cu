@@ -1,6 +1,51 @@
 #include "assignment.cuh" // important globals are defined here read it
 
 
+__global__ void phaseShift(int n, cuFloatComplex *S, float shiftF)
+{
+    
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int stride = gridDim.x * blockDim.x;
+    unsigned int idx = tid;
+
+    cuFloatComplex shiftVec = make_cuFloatComplex(cosf(shiftF), sinf(shiftF));
+
+
+    while(idx < n){
+
+        S[idx] = cuCmulf(shiftVec, S[idx]);
+
+        idx += stride;
+    }
+
+}
+
+// IT MUST BE TRUE THAT S has BLACKMAN_LPF_200KHz_len samples before it. This can be filled
+// with zero or really anything it doesn't matter because of long runs those values will be
+// filled with valid samples 
+__global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
+                                           cuFloatComplex *R)
+{
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int stride = gridDim.x * blockDim.x;
+    unsigned int idx = tid;
+
+    while(idx < n)
+    {
+        float I = 0;
+        float Q = 0; 
+        for(int k = 0; k < c_BLACKMAN_LPF_200KHz_len; k++)
+        {
+            cuFloatComplex F = S[idx-k];
+            I += c_BLACKMAN_LPF_200KHz[k] * cuCrealf(F);
+            Q += c_BLACKMAN_LPF_200KHz[k] * cuCimagf(F);
+        }
+
+        R[idx] = make_cuFloatComplex(I, Q);
+        idx += stride; 
+    }
+}
+
 __global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
 {
     //assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
@@ -169,6 +214,24 @@ int main(int argc, char** argv)
 
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s) );
+    
+    // FFT raw data
+    printf("Calculating fft of normal IQ dat\n");
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
+
+    // allocate some data with filter primer space
+    cuFloatComplex *d_preFilter, *d_z;
+    checkCuda( cudaMalloc((void**)&d_preFilter, sizeof(cuFloatComplex) * (n+ BLACKMAN_LPF_200KHz_len)));
+    checkCuda( cudaMemsetAsync(d_preFilter, 0, sizeof(float) * BLACKMAN_LPF_200KHz_len, s) );
+    d_z = d_preFilter+BLACKMAN_LPF_200KHz_len; // samples start after filter primers vars
+    checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
+    
+    // phase shift the data
+    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, 0.178e6)) );
+    checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
+    
+        
+
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
