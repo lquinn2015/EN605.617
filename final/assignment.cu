@@ -206,6 +206,10 @@ int main(int argc, char** argv)
     cuFloatComplex *z = readData(&n, idata, qdata); // we have n complex numbers now
     free(idata); free(qdata); // unused
 
+    for(int i = 0; i < 5; i++){
+        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
+    }
+
     #ifdef DPLOT
     gnuplot = popen("gnuplot -persistent", "w");
     #else
@@ -231,6 +235,10 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
     
     checkCuda( cudaStreamSynchronize(s) );
+    
+    for(int i = 0; i < 5; i++){
+        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
+    }
 
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
