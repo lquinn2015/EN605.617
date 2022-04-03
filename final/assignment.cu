@@ -230,7 +230,7 @@ int main(int argc, char** argv)
     checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, 0.178e6)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
-        
+    checkCuda( cudaStreamSynchronize(s) );
 
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
