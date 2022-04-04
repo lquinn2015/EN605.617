@@ -221,7 +221,7 @@ int main(int argc, char** argv)
     
     // FFT raw data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 20000, 0, s, 100.122e6, 2.5e6, "FM FFT");
+    //create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
 
     // allocate some data with filter primer space
     cuFloatComplex *d_preFilter, *d_z, *d_r;
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.178e6)) );
+    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.0712)) );
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
    
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 20000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
+    create_fft(z, 5000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
     free(z);
 
     
