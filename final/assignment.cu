@@ -233,21 +233,30 @@ int main(int argc, char** argv)
     
     // phase shift the data
     checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.0712)) );
-    checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
-    checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
-   
-    checkCuda( cudaFree(d_r) );
-    checkCuda( cudaFree(d_preFilter) );
- 
-    checkCuda( cudaStreamSynchronize(s) );
-    
+    // FFT from actual data
+    printf("Calculating fft of shifted IQ dat\n");
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift");
     for(int i = n-5; i < n; i++){
         printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
     }
+    
+    checkCuda( cudaStreamSynchronize(s) );
+
+    checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
+    checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
+   
+    checkCuda( cudaStreamSynchronize(s) );
+    checkCuda( cudaFree(d_r) );
+    checkCuda( cudaFree(d_preFilter) );
+ 
+    for(int i = n-5; i < n; i++){
+        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
+    }
+    
 
     // FFT from actual data
-    printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
+    printf("Calculating fft of shifted filtered IQ dat\n");
+    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift & filter");
     free(z);
 
     
