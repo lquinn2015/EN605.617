@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.578e6)) );
+    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.178e6)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
    
     checkCuda( cudaFree(d_preFilter) );
