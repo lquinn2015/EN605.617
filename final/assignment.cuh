@@ -45,13 +45,6 @@ __constant__ float c_BLACKMAN_LPF_200KHz[] = {
 #define BLACKMAN_LPF_200KHz_len (59)
 __constant__ int c_BLACKMAN_LPF_200KHz_len = BLACKMAN_LPF_200KHz_len;
 
-
-/*
-    This will shift n signal samples by the given freq
-*/
-__global__ void phaseShift(int n, cuFloatComplex *S, float shiftF);
-
-
 /*
     This function uses my blackman coefficents above and applies a FIR filter tuned for
         200Khz. We will filter the I and Q components with a linear Blackman FIR filter
@@ -62,6 +55,14 @@ __global__ void phaseShift(int n, cuFloatComplex *S, float shiftF);
     |R| = n 
 */
 __global__ void blackmanFIR_200KHz(int n, cuFloatComplex *S, cuFloatComplex *R); 
+
+
+/*
+    This will shift n signal samples by the given freq
+*/
+__global__ void phaseShift(int n, cuFloatComplex *S, float shiftF);
+
+
 
 
 /*

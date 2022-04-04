@@ -224,16 +224,19 @@ int main(int argc, char** argv)
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
 
     // allocate some data with filter primer space
-    cuFloatComplex *d_preFilter, *d_z;
+    cuFloatComplex *d_preFilter, *d_z, *d_r;
     checkCuda( cudaMalloc((void**)&d_preFilter, sizeof(cuFloatComplex) * (n+ BLACKMAN_LPF_200KHz_len)));
+    checkCuda( cudaMalloc((void**)&d_r, sizeof(cuFloatComplex)*n) );
     checkCuda( cudaMemsetAsync(d_preFilter, 0, sizeof(float) * BLACKMAN_LPF_200KHz_len, s) );
     d_z = d_preFilter+BLACKMAN_LPF_200KHz_len; // samples start after filter primers vars
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
     checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.178e6)) );
-    checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
+    checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
+    checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
    
+    checkCuda( cudaFree(d_r) );
     checkCuda( cudaFree(d_preFilter) );
  
     checkCuda( cudaStreamSynchronize(s) );
