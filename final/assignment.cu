@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.178e6)) );
+    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.578e6)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
     
     checkCuda( cudaStreamSynchronize(s) );
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
 
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 101.1e6, 2.5e6, "FM FFT_withshift");
+    create_fft(z, 5000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
     free(z);
 
     
