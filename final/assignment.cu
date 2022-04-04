@@ -27,8 +27,8 @@ __global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
                                            cuFloatComplex *R)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned int stride = gridDim.x * blockDim.x;
-    unsigned int idx = tid;
+    int stride = gridDim.x * blockDim.x;
+    int idx = tid;
 
     while(idx < n)
     {
@@ -36,12 +36,7 @@ __global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
         float Q = 0; 
         for(int k = 0; k < c_BLACKMAN_LPF_200KHz_len; k++)
         {
-            cuFloatComplex F;
-            if(idx-k < 0){ // slow
-                F = make_cuFloatComplex(0,0);
-            } else {
-                cuFloatComplex F = S[idx-k];
-            }
+            cuFloatComplex F = S[idx-k];
             I += c_BLACKMAN_LPF_200KHz[k] * cuCrealf(F);
             Q += c_BLACKMAN_LPF_200KHz[k] * cuCimagf(F);
         }
