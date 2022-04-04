@@ -8,7 +8,7 @@ __global__ void phaseShift(int n, cuFloatComplex *S, float shiftF)
     unsigned int stride = gridDim.x * blockDim.x;
     unsigned int idx = tid;
 
-    cuFloatComplex shiftVec = make_cuFloatComplex(cosf(shiftF), sinf(shiftF));
+    cuFloatComplex shiftVec = make_cuFloatComplex(cospif(2*shiftF), sinpif(2*shiftF));
 
 
     while(idx < n){
@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -2*CUDART_PI_F*0.178e6)) );
+    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.178e6)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
     
     checkCuda( cudaStreamSynchronize(s) );
