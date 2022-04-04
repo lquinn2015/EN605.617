@@ -8,7 +8,7 @@ __global__ void phaseShift(int n, cuFloatComplex *S, float shiftF)
     unsigned int stride = gridDim.x * blockDim.x;
     unsigned int idx = tid;
 
-    cuFloatComplex shiftVec = make_cuFloatComplex(cospif(2*shiftF), sinpif(2*shiftF));
+    cuFloatComplex shiftVec = make_cuFloatComplex(cosf(shiftF), sinf(shiftF));
 
 
     while(idx < n){
