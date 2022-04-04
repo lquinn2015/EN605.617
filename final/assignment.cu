@@ -226,7 +226,7 @@ int main(int argc, char** argv)
     
     // FFT raw data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
+    create_fft(z, 20000, 0, s, 100.122e6, 2.5e6, "FM FFT");
 
     // allocate some data with filter primer space
     cuFloatComplex *d_preFilter, *d_z, *d_r;
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 
     // FFT from actual data
     printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
+    create_fft(z, 20000, 0, s, 101.1e6, 2.5e6, "FM FFT Shift?");
     free(z);
 
     
