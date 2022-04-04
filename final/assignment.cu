@@ -206,7 +206,7 @@ int main(int argc, char** argv)
     cuFloatComplex *z = readData(&n, idata, qdata); // we have n complex numbers now
     free(idata); free(qdata); // unused
 
-    for(int i = 0; i < 5; i++){
+    for(int i = n-5; i < n; i++){
         printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
     }
 
@@ -236,7 +236,7 @@ int main(int argc, char** argv)
     
     checkCuda( cudaStreamSynchronize(s) );
     
-    for(int i = 0; i < 5; i++){
+    for(int i = n-5; i < n; i++){
         printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
     }
 
