@@ -58,6 +58,11 @@ are independent of the target freqency so we can treat them as constants no matt
 we want to tune to. This is because we are always acting on the Baseband freqency we generated
 with the last step. I used a reference to generate those constants. 
 
+Now one thing of note here is that in order to filter the above IQ data we need to run
+our FIR filter on both the I and Q parts. Which is much easier than making a complex filter
+Remember our data is complex because we multiplied it by cos,sin in the RF front end. Its not
+"really" complex execpt when we want it to be. 
+
 ## Downsample  X_4 = X_3[0:n:D]
 
 We have a lot of data because we sampled at 2.5 Mhz FM bandwidth is only around 200 Khz. Thus
