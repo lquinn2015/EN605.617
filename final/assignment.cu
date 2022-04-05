@@ -237,16 +237,18 @@ int main(int argc, char** argv)
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_z, -0.178e6, 0,2.5e6)) );
     // FFT from actual data
     printf("Calculating fft of shifted IQ dat\n");
-    checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
+    checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
     
     checkCuda( cudaStreamSynchronize(s) );
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift");
+    
     for(int i = n-5; i < n; i++){
         printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
     }
     
     checkCuda( cudaStreamSynchronize(s) );
 
+    printf("Running blackman filter\n")
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
    
