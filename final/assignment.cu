@@ -1,18 +1,20 @@
 #include "assignment.cuh" // important globals are defined here read it
 
 
-__global__ void phaseShift(int n, cuFloatComplex *S, float shiftF)
+__global__ void freqShift(int n, cuFloatComplex *S, 
+     float shiftF, float intialPhase, float sampleF)
 {
-    
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     unsigned int stride = gridDim.x * blockDim.x;
     unsigned int idx = tid;
 
-    cuFloatComplex shiftVec = make_cuFloatComplex(cosf(shiftF), sinf(shiftF));
+    float dt = shiftF / sampleF;
 
+    while(idx < n)
+    {
 
-    while(idx < n){
-
+        float f_t = dt * (float)idx;
+        cuFloatComplex shiftVec = make_cuFloatComplex(cospif(2*f_t), sinpif(2*f_t)); 
         S[idx] = cuCmulf(shiftVec, S[idx]);
 
         idx += stride;
@@ -232,7 +234,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (phaseShift<<<8,1024,0, s>>>(n, d_z, -0.0712)) );
+    checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_z, -0.0712e6, 0,2.5e6)) );
     // FFT from actual data
     printf("Calculating fft of shifted IQ dat\n");
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift");
