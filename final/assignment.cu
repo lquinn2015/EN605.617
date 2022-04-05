@@ -234,7 +234,7 @@ int main(int argc, char** argv)
     checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
     
     // phase shift the data
-    checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_z, -0.0712e6, 0,2.5e6)) );
+    checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_z, 0.178e6, 0,2.5e6)) );
     // FFT from actual data
     printf("Calculating fft of shifted IQ dat\n");
     create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift");
