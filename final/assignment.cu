@@ -248,7 +248,7 @@ int main(int argc, char** argv)
     
     checkCuda( cudaStreamSynchronize(s) );
 
-    printf("Running blackman filter\n")
+    printf("Running blackman filter\n");
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
     checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
    
