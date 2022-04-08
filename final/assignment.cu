@@ -237,7 +237,7 @@ void plot_wave(float* wave, int n)
     fprintf(gnuplot, "plot '-' \n");
     
     for(int i = 0; i < n; i++){
-        fprintf(gnuplot,"%d, %f\n", i, wave[i]);
+        fprintf(gnuplot,"%d, %d\n", i, (int16_t)wave[i]);
     }
     fprintf(gnuplot, "e\n");
 }
