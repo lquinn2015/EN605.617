@@ -70,15 +70,17 @@ __global__ void decimateR2R(int n, int d, float *S, float *R)
     } 
 }
 
-__global__ void scaleVec(int n, float *s, float normal)
+__global__ void scaleVec(int n, float *s, float *normal)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int stride = gridDim.x * blockDim.x;
     int idx = tid;
 
+    float norm = *normal;
+
     while(idx < n)
     {
-        s[idx] = 10000 * s[idx] / normal;
+        s[idx] = 10000 * s[idx] / norm;
         idx += stride;
     }
 }
@@ -363,7 +365,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaStreamSynchronize(s) );
     printf("Scaling vector\n");
     
-    checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, d_ra[n_d2])) );
+    checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
     
     checkCuda( cudaStreamSynchronize(s) );
     printf("Copying data back to sig_out\n");

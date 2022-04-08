@@ -23,8 +23,6 @@ __constant__ const int c_FIND_MAX_CACHESIZE = __FIND_MAX_CACHE_SIZE__;
 __constant__ const int c_FIND_MAX_CACHESIZE = 1024;
 #endif
 
-
-
 __constant__ float c_BLACKMAN_LPF_200KHz[] = {
     0.000000000000000000, -0.000011466433343440, -0.000048159680438716, -0.000070951498745996,
     0.000000000000000000, 0.000226394896924650, 0.000570593070542985, 0.000843882357908127,
@@ -85,7 +83,7 @@ __global__ void decimateR2R(int n, int dec_rate, float *S, float *R);
 */
 __global__ void pdsC2R(int n, cuFloatComplex *S, float *R);
 
-__global__ void scaleVec(int n, float* vec, float normal);
+__global__ void scaleVec(int n, float* vec, float *normal);
 
 
 /*
