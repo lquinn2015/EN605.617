@@ -9,5 +9,5 @@ all: assignment.cl assignment.cpp
 	./assignment.exe 64000	>> data
 	./assignment.exe 128000	>> data
 	./assignment.exe 256000	>> data
-	./report2csv.awk data
+	./report2csv.awk data > data.csv
 
