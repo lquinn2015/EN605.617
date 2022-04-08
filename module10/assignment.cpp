@@ -297,7 +297,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    program = CreateProgram(context, device, "assignement.cl");
+    program = CreateProgram(context, device, "assignment.cl");
     if (program == NULL)
     {
         Cleanup(context, program, commandQueue);
