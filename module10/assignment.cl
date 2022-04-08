@@ -6,7 +6,7 @@ __kernel void addk( __global const float *a,
 {
 
     int gid = get_global_id(0);
-    result[gid] = a[gid] + b[gid];
+    res[gid] = a[gid] + b[gid];
 }
 
 __kernel void subk( __global const float *a,
@@ -15,7 +15,7 @@ __kernel void subk( __global const float *a,
 {
 
     int gid = get_global_id(0);
-    result[gid] = a[gid] - b[gid];
+    res[gid] = a[gid] - b[gid];
 }
 
 __kernel void mulk( __global const float *a,
@@ -24,7 +24,7 @@ __kernel void mulk( __global const float *a,
 {
 
     int gid = get_global_id(0);
-    result[gid] = a[gid] * b[gid];
+    res[gid] = a[gid] * b[gid];
 }
 
 __kernel void divk( __global const float *a,
@@ -33,7 +33,7 @@ __kernel void divk( __global const float *a,
 {
 
     int gid = get_global_id(0);
-    result[gid] = a[gid] / b[gid];
+    res[gid] = a[gid] / b[gid];
 }
 
 __kernel void convk( __global const float *a,
@@ -42,5 +42,5 @@ __kernel void convk( __global const float *a,
 {
 
     int gid = get_global_id(0);
-    result[gid] = a[gid]*b[gid] + a[gid];
+    res[gid] = a[gid]*b[gid] + a[gid];
 }
