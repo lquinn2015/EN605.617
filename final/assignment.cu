@@ -44,29 +44,23 @@ __global__ void decimateC2C(int n, int dec, cuFloatComplex *S,
 
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int stride = gridDim.x * blockDim.x;
-    int strideD = stride * dec;
     int idx = tid;
-    int idxD = tid * dec;
-    while(idxD < n) 
+    while(idx < n) 
     {
-        R[idx] = S[idxD];
+        R[idx] = S[idx*dec];
         idx += stride;
-        idxD += strideD;
     } 
 }
 
-__global__ void decimateR2R(int n, int d, float *S, float *R)
+__global__ void decimateR2R(int n, int dec, float *S, float *R)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int stride = gridDim.x * blockDim.x * d;
-    int strideD = stride * d;
     int idx = tid;
-    int idxD = tid * d;
-    while(idxD < n) 
+    while(idx < n) 
     {
-        R[idx] = S[idxD];
+        R[idx] = S[idx*dec];
         idx += stride;
-        idxD += strideD;
     } 
 }
 
