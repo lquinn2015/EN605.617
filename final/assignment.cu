@@ -301,6 +301,8 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
 {
     // setup
     int n = *n_out;
+    printf("FM demodulating %d at %f sample rate\n", n, freq_sr);
+
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s) );
     cuFloatComplex *d_ca, *d_cb;
@@ -329,6 +331,8 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     float freq_sr_d1 = freq_sr / dec_rate;
     checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_ca, d_cb)));
     int n_d1 = n / dec_rate; // trunction keeps us in band
+
+    printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rat);
     
     checkCuda( cudaStreamSynchronize(s) );
     printf("Polar discrimnate\n");
@@ -345,6 +349,8 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     //float freq_sr_d2 = freq_sr_d1 / dec_rate;
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
     int n_d2 = n_d1 / dec_rate; // stay in band
+    
+    printf("Decimated %d -> %d at a rate of %d\n", n_d1, d_d2, dec_rate);
 
     // scale volume
     checkCuda( cudaStreamSynchronize(s) );
