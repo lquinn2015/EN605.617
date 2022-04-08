@@ -231,6 +231,17 @@ void plot_xy_data(double* x, double *y, int n)
     fprintf(gnuplot, "e\n");
 }
 
+void plot_wave(float* wave, int n)
+{
+    fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++ );
+    fprintf(gnuplot, "plot '-' \n");
+    
+    for(int i = 0; i < n; i++){
+        fprintf(gnuplot,"%d, %f\n", i, wave[i]);
+    }
+    fprintf(gnuplot, "e\n");
+}
+
 void plotfft(float f_c, float f_s, int n, float* db, const char* title){
 
     float Fc_Mhz = f_c / 1e6; // div by 10^6 to shift to mhz units
@@ -413,6 +424,8 @@ int main(int argc, char** argv)
         fwrite( &sample, sizeof(sample), 1, ad);
     }
     fclose(ad);
+
+    plot_wave(audio, n);
 
 
     free(audio);   
