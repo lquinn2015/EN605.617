@@ -24,6 +24,7 @@ __constant__ const int c_FIND_MAX_CACHESIZE = 1024;
 #endif
 
 
+
 __constant__ float c_BLACKMAN_LPF_200KHz[] = {
     0.000000000000000000, -0.000011466433343440, -0.000048159680438716, -0.000070951498745996,
     0.000000000000000000, 0.000226394896924650, 0.000570593070542985, 0.000843882357908127,
@@ -49,20 +50,42 @@ __constant__ int c_BLACKMAN_LPF_200KHz_len = BLACKMAN_LPF_200KHz_len;
     This function uses my blackman coefficents above and applies a FIR filter tuned for
         200Khz. We will filter the I and Q components with a linear Blackman FIR filter
         seperately. 
-
-    |S| = n + |Blackman_Len|;  in this case S-> data start and 59 samples before it exist
-        
-    |R| = n 
+   
+    The filter will require some time to settle but we do our best
 */
 __global__ void blackmanFIR_200KHz(int n, cuFloatComplex *S, cuFloatComplex *R); 
 
 
 /*
-    This will shift n signal samples by the given freq
+    To do a frequency shift in the frequency domain you need to multiply by a complex 
+        signal in the time domain. I.e
+    
+       w(t) * Z(t) --> w(F) +  Z(F)
+        w(t) = cos(2pi * Freq(t)) + sin(2pi * freq(t)) = e^(2pi i F_offset / Fs)
+        
+
 */
-__global__ void phaseShift(int n, cuFloatComplex *S, float shiftF);
+__global__ void freqShift(int n, cuFloatComplex *S, float shiftF, float intialPhase, float sampleF);
 
 
+/*
+    Decimates a signal by dec_rate i.e take only every dec_rate sample
+        C2C is complex to complex
+        C2R is complex to real currently unimpl
+        R2R is real to real
+*/
+__global__ void decimateC2C(int n, int dec_rate, cuFloatComplex *S, cuFloatComplex *R);
+__global__ void decimateR2R(int n, int dec_rate, float *S, float *R);
+
+/*
+    Calculates the polar discriminate of a complex signal and converts it to the real
+        domain
+   
+    eqiv  ->  z[i] .conj x[i+1]
+*/
+__global__ void pdsC2R(int n, cuFloatComplex *S, float *R);
+
+__global__ void scaleVec(int n, float* vec, float normal);
 
 
 /*
@@ -73,7 +96,8 @@ __global__ void phaseShift(int n, cuFloatComplex *S, float shiftF);
         Will assert if __FIND_MAX_CACHESIZE__ < block size
 
 */
-__global__ void findMaxMag(int n, cuFloatComplex *arr, float *db);
+__global__ void findMaxC2RMag(int n, cuFloatComplex *arr, float *db);
+__global__ void findMaxR2RMag(int n, float *arr, float *db);
 
 
 __constant__ float c_dBAdjustment = 20.0;

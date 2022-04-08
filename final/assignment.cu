@@ -22,9 +22,67 @@ __global__ void freqShift(int n, cuFloatComplex *S,
 
 }
 
-// IT MUST BE TRUE THAT S has BLACKMAN_LPF_200KHz_len samples before it. This can be filled
-// with zero or really anything it doesn't matter because of long runs those values will be
-// filled with valid samples 
+__global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
+{
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int stride = gridDim.x * blockDim.x;
+    unsigned int idx = tid;
+
+    while(idx < n) {
+        
+        if(idx+1 > n) break;
+        
+        cuFloatComplex p = cuCmulf(cuConjf(sig[idx]), sig[idx+1]);
+        r[idx] = atan( cuCimagf(p) / cuCrealf(p)); // atan( Im(p) / Re(p))
+        idx += stride;
+    }
+ 
+}
+__global__ void decimateC2C(int n, int dec, cuFloatComplex *S, 
+        cuFloatComplex *R)
+{
+
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int stride = gridDim.x * blockDim.x;
+    int strideD = stride * dec;
+    int idx = tid;
+    int idxD = tid * dec;
+    while(idxD < n) 
+    {
+        R[idx] = S[idxD];
+        idx += stride;
+        idxD += strideD;
+    } 
+}
+
+__global__ void decimateR2R(int n, int d, float *S, float *R)
+{
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int stride = gridDim.x * blockDim.x * d;
+    int strideD = stride * d;
+    int idx = tid;
+    int idxD = tid * d;
+    while(idxD < n) 
+    {
+        R[idx] = S[idxD];
+        idx += stride;
+        idxD += strideD;
+    } 
+}
+
+__global__ void scaleVec(int n, float *s, float normal)
+{
+    const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int stride = gridDim.x * blockDim.x;
+    int idx = tid;
+
+    while(idx < n)
+    {
+        s[idx] = 10000 * s[idx] / normal;
+        idx += stride;
+    }
+}
+
 __global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
                                            cuFloatComplex *R)
 {
@@ -38,6 +96,7 @@ __global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
         float Q = 0; 
         for(int k = 0; k < c_BLACKMAN_LPF_200KHz_len; k++)
         {
+            if(idx-k < 0 ) continue; // ease of impl ignore lower samples
             cuFloatComplex F = S[idx-k];
             I += c_BLACKMAN_LPF_200KHz[k] * cuCrealf(F);
             Q += c_BLACKMAN_LPF_200KHz[k] * cuCimagf(F);
@@ -48,7 +107,44 @@ __global__ void blackmanFIR_200KHz( int n, cuFloatComplex *S,
     }
 }
 
-__global__ void findMaxMag(int n, cuFloatComplex *arr,  float *db)
+__global__ void findMaxR2RMag(int n, float *arr,  float *db){
+    
+    __shared__ float cache[c_FIND_MAX_CACHESIZE];
+    unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
+    unsigned stride = gridDim.x * blockDim.x;
+    unsigned offset = 0;
+    
+    float *max = &db[n]; // db has a max at n
+    int* mutex = (int*) &db[n+1]; // and lock at 0;
+    
+    float tmp = -1.0;
+    while(idx + offset < n){
+        tmp = fmaxf(tmp, abs(arr[idx+offset]));
+        offset += stride;
+    }
+    cache[threadIdx.x] = tmp;
+    __syncthreads();
+
+    //reduce in the block
+    unsigned int i = blockDim.x/2; 
+    while(i != 0){
+        if(threadIdx.x < i){
+            cache[threadIdx.x] = fmaxf(cache[threadIdx.x], cache[threadIdx.x+i]);
+        }
+        __syncthreads();
+        i /= 2;
+    }
+    // reduce among all blocks
+    if(threadIdx.x == 0){
+        while(atomicCAS(mutex, 0, 1) != 0); // lock
+        *max =fmaxf(*max, cache[0]);
+        atomicExch(mutex, 0); // unlock
+    }
+
+}
+
+
+__global__ void findMaxC2RMag(int n, cuFloatComplex *arr,  float *db)
 {
     //assert(c_FIND_MAX_CACHESIZE >= blockDim.x);
     __shared__ float cache[c_FIND_MAX_CACHESIZE];
@@ -180,7 +276,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCufft( cufftDestroy(plan) ); // brick the plan after being sued
 
     // we have a FFT we need to normalize the db data so it makes sense
-    checkCudaKernel( (findMaxMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
+    checkCudaKernel( (findMaxC2RMag<<<2,1024, 0, s>>>(n, d_fft, d_db)) );
     checkCudaKernel( (fft2amp<<<1, 1024, 0, s>>>(n, d_fft, d_db)) );
     float * db = (float*) malloc(n*sizeof(float) + 2); 
 
@@ -201,6 +297,67 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
 }
 
 
+float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq_sr) 
+{
+    // setup
+    int n = *n_out;
+    cudaStream_t s;
+    checkCuda( cudaStreamCreate(&s) );
+    cuFloatComplex *d_ca, *d_cb;
+    float *d_ra, *d_rb;
+    checkCuda( cudaMalloc((void**)&d_ca, sizeof(cuFloatComplex)*n) );
+    checkCuda( cudaMalloc((void**)&d_cb, sizeof(cuFloatComplex)*n) );
+    checkCuda( cudaMalloc((void**)&d_ra, sizeof(float)*n) );
+    checkCuda( cudaMalloc((void**)&d_rb, sizeof(float)*n) );
+    checkCuda( cudaMemcpyAsync(d_ca, &signal[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
+    
+    // exec
+    // center by removing drift
+    checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
+
+    // filter out noise
+    checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
+
+    // Decimate to bandwidth = 200Khz
+    int dec_rate = int(freq_sr / 2e5);
+    float freq_sr_d1 = freq_sr / dec_rate;
+    checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_ca, d_cb)));
+    int n_d1 = n / dec_rate; // trunction keeps us in band
+
+    // potential plot a constellation for debug
+    // polar discriminate to demoulate the signal this is a C2R operation
+    checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_cb, d_ra)) );
+    
+    // skiping de-emphasis fitler and just decimate to audio
+    dec_rate = int(freq_sr_d1/ 44100.0); //audio samples will be at ~44.1Khz
+    //float freq_sr_d2 = freq_sr_d1 / dec_rate;
+    checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
+    int n_d2 = n_d1 / dec_rate; // stay in band
+
+    // scale volume
+    
+    checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
+        // note max is stored in d_ra[n_n2] by findMaxDef
+    checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, d_ra[n_d2])) );
+
+
+    *n_out = n_d2; // log the final samples count
+    float *sig_out = (float*) malloc(n_d2 * sizeof(float));
+    checkCuda( cudaMemcpyAsync(sig_out, d_rb, n_d2*sizeof(float), cudaMemcpyDeviceToHost,s) );
+
+
+
+    // release resources
+    checkCuda( cudaStreamSynchronize(s) );
+    checkCuda( cudaStreamDestroy(s) );
+    checkCuda( cudaFree(d_ca) );
+    checkCuda( cudaFree(d_cb) );
+    checkCuda( cudaFree(d_ra) );
+    checkCuda( cudaFree(d_rb) );
+
+    return sig_out;
+}
+
 int main(int argc, char** argv)
 {
     int n;
@@ -208,64 +365,23 @@ int main(int argc, char** argv)
     cuFloatComplex *z = readData(&n, idata, qdata); // we have n complex numbers now
     free(idata); free(qdata); // unused
 
-    for(int i = n-5; i < n; i++){
-        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
-    }
-
     #ifdef DPLOT
     gnuplot = popen("gnuplot -persistent", "w");
     #else
     gnuplot = fopen("gplot", "w"); // with live ploting off write theplots to a file
     #endif
 
-    cudaStream_t s;
-    checkCuda( cudaStreamCreate(&s) );
-    
-    // FFT raw data
-    printf("Calculating fft of normal IQ dat\n");
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT");
+    // Sample Rate ends up being 44Khz by convention
+    float *audio = fm_demod(z, &n, 0.178e6, 2.5e6); 
 
-    // allocate some data with filter primer space
-    cuFloatComplex *d_preFilter, *d_z, *d_r;
-    checkCuda( cudaMalloc((void**)&d_preFilter, sizeof(cuFloatComplex) * (n+ BLACKMAN_LPF_200KHz_len)));
-    checkCuda( cudaMalloc((void**)&d_r, sizeof(cuFloatComplex)*n) );
-    checkCuda( cudaMemsetAsync(d_preFilter, 0, sizeof(float) * BLACKMAN_LPF_200KHz_len, s) );
-    d_z = d_preFilter+BLACKMAN_LPF_200KHz_len; // samples start after filter primers vars
-    checkCuda( cudaMemcpyAsync(d_z, &z[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
-    
-    // phase shift the data
-    checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_z, -0.178e6, 0,2.5e6)) );
-    // FFT from actual data
-    printf("Calculating fft of shifted IQ dat\n");
-    checkCuda( cudaMemcpyAsync(&z[0], d_z, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
-    
-    checkCuda( cudaStreamSynchronize(s) );
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift");
-    
-    for(int i = n-5; i < n; i++){
-        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
+    FILE* ad = fopen("audio.out", "w+");
+
+    for(int i = 0; i<n; i++){
+        int16_t sample = (int16_t) audio[i];
+        fwrite( &sample, sizeof(sample), 1, ad);
     }
-    
-    checkCuda( cudaStreamSynchronize(s) );
+    fclose(ad);
 
-    printf("Running blackman filter\n");
-    checkCudaKernel( (blackmanFIR_200KHz<<<8,1024, 0, s>>>(n, d_z, d_r)) );
-    checkCuda( cudaMemcpyAsync(&z[0], d_r, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost,s) );
-   
-    checkCuda( cudaStreamSynchronize(s) );
-    checkCuda( cudaFree(d_r) );
-    checkCuda( cudaFree(d_preFilter) );
- 
-    for(int i = n-5; i < n; i++){
-        printf("z[%d] = %f + i*%f \n", i, cuCrealf(z[i]), cuCimagf(z[i]));
-    }
-    
 
-    // FFT from actual data
-    printf("Calculating fft of shifted filtered IQ dat\n");
-    create_fft(z, 5000, 0, s, 100.122e6, 2.5e6, "FM FFT Shift & filter");
-    free(z);
-
-    
-    checkCuda( cudaStreamDestroy(s) );
+    free(audio);   
 }
