@@ -45,7 +45,7 @@ __global__ void decimateC2C(int n, int dec, cuFloatComplex *S,
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int stride = gridDim.x * blockDim.x;
     int idx = tid;
-    while(idx < n) 
+    while(idx*dec < n) 
     {
         R[idx] = S[idx*dec];
         idx += stride;
@@ -57,8 +57,9 @@ __global__ void decimateR2R(int n, int dec, float *S, float *R)
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     int stride = gridDim.x * blockDim.x;
     int idx = tid;
-    while(idx < n) 
+    while(idx *dec < n) 
     {
+        
         R[idx] = S[idx*dec];
         idx += stride;
     } 
