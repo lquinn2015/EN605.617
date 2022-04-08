@@ -348,7 +348,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
 
     // scale volume
     checkCuda( cudaStreamSynchronize(s) );
-    printf("Finding max Mag\n");
+    printf("Finding max Mag on %d samples\n", n_d2);
     
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
         // note max is stored in d_ra[n_n2] by findMaxDef
