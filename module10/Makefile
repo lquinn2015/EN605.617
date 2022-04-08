@@ -1,2 +1,2 @@
-all: assignment.c
-	gcc assignment.c -o assignment.exe
+all: assignment.cl assignment.cpp
+	g++ assignment.cpp -lOpenCl -o assignment.exe
