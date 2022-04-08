@@ -332,7 +332,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_ca, d_cb)));
     int n_d1 = n / dec_rate; // trunction keeps us in band
 
-    printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rat);
+    printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
     
     checkCuda( cudaStreamSynchronize(s) );
     printf("Polar discrimnate\n");
@@ -350,12 +350,13 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
     int n_d2 = n_d1 / dec_rate; // stay in band
     
-    printf("Decimated %d -> %d at a rate of %d\n", n_d1, d_d2, dec_rate);
+    printf("Decimated %d -> %d at a rate of %d\n", n_d1, n_d2, dec_rate);
 
     // scale volume
     checkCuda( cudaStreamSynchronize(s) );
     printf("Finding max Mag on %d samples\n", n_d2);
-    
+   
+    checkCuda( cudaMemsetAsync(d_ra, 0, (n_d2+2)*sizeof(float), s) ); 
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
         // note max is stored in d_ra[n_n2] by findMaxDef
     
