@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <time.h>
 
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
@@ -272,6 +273,12 @@ execKern_Err:
 
 int main(int argc, char** argv)
 {
+
+    if(argc < 2) exit(-1);
+
+    int n = atoi(argv[1]);
+    std::cout << "Problem size: " << n << std::endl;
+
     cl_context context = 0;
     cl_command_queue commandQueue = 0;
     cl_program program = 0;
@@ -304,21 +311,24 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    float result[ARRAY_SIZE];
-    float a[ARRAY_SIZE];
-    float b[ARRAY_SIZE];
-    for (int i = 0; i < ARRAY_SIZE; i++)
+    float *result = (float*) malloc(n*sizeof(float));
+    float *a = (float*)malloc(n*sizeof(float));
+    float *b = (float*)malloc(n*sizeof(float));
+    for (int i = 0; i < n; i++)
     {
         a[i] = (float)i;
         b[i] = (float)(i * 2);
     }
 
-    execKern(program, commandQueue, context, "addk",  ARRAY_SIZE, a, b, result);
-    execKern(program, commandQueue, context, "subk",  ARRAY_SIZE, a, b, result);
-    execKern(program, commandQueue, context, "mulk",  ARRAY_SIZE, a, b, result);
-    execKern(program, commandQueue, context, "divk",  ARRAY_SIZE, a, b, result);
-    execKern(program, commandQueue, context, "convk", ARRAY_SIZE, a, b, result);
 
+    clock_t tic = clock();
+    execKern(program, commandQueue, context, "addk",  n, a, b, result);
+    execKern(program, commandQueue, context, "subk",  n, a, b, result);
+    execKern(program, commandQueue, context, "mulk",  n, a, b, result);
+    execKern(program, commandQueue, context, "divk",  n, a, b, result);
+    execKern(program, commandQueue, context, "convk", n, a, b, result);
+    clock_t toc = clock();
+    printf("Elapsed time %f seconds\n", (double)(toc-tic) / CLOCKS_PER_SEC);
 
     Cleanup(context, program, commandQueue);
 
