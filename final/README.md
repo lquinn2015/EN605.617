@@ -27,10 +27,14 @@ z = I + iQ = a cos(theta) + i b sin(theta) = re^(i theta)
 I'll now outline the plane to decode and the motivation for the underlying cuda kernels used
 
 ## Sample data:  X_1 = RTL_sample(f_c, f_r, n) 
+![Original IQ data](./data/fft_odata.png)
 
-This is the data the RTL-SDR will generate when we tune it. Lets give it length n 
+This is the data the RTL-SDR will generate when we tune it. It gets length n and we display
+above the FFT of this data. I will show the FFT of the data after the given headers step
+has run to make things clear.
 
 ## Mix to Baseband: X_2 = X_1 * e^(i f_d)   
+![Downconvert to baseband](./data/fft_shiftdata.png)
 
 I know aprori there is a FM signal at 100.3, 101.1,... MHz. In order to get the signal out
 We need to center samples to f_t or our target frequency. This means we need to do a phase
@@ -46,6 +50,7 @@ These are the strongest signals in our data. This is clear if you look at a spec
 the data. 
 
 ## Low Pass Filter:  X_3 = conv(X_2, H)
+![Low Pass Filter](./data/filter_data.png)
 
 This is the first math heavy step. We want to smooth the data an remove high frequency
 artifacts and other stations from our output. To do this we need to run a FIR filter on our
@@ -64,6 +69,7 @@ Remember our data is complex because we multiplied it by cos,sin in the RF front
 "really" complex execpt when we want it to be. 
 
 ## Downsample  X_4 = X_3[0:n:D]
+![Downsample to FM](./data/decimateComplex.png)
 
 We have a lot of data because we sampled at 2.5 Mhz FM bandwidth is only around 200 Khz. Thus
 at this point we can reduce the data we have by downsampling without any lost. We simply splice
@@ -76,6 +82,7 @@ X_4 = X_3[0:n:D]
 Thus we end up with 12x less data whose sample rate is at 200 KHz
 
 ## Demodulate:  X_5 = 
+![Demodulate FM](./data/demodulate_real.png)
 
 We now have wideband FM data in X_4 thus we can attempt to demodulate it. If you open
 up a DSP text book method one will say we can do the arctanget of Q/I to get theta and
@@ -89,13 +96,31 @@ Let z(t) = I(t) + iQ(t)   where I,Q are our quadratures.  We are interested the 
 \frac{d}{dt}\theta = \frac{d}{dt} tan^{-1}(\frac{Q}{I})
 \frac{\delta\theta}{dt}=  \frac{I \frac{dQ}{dt}  - Q \frac{dI}{dt}}{ I^2  + Q^2} 
 
-This is easy to compute even on a FPGA since it is only scalar multiplications! Thus X_5 will be demodulated audio
+This is easy to compute even on a FPGA since it is only scalar multiplications! Thus X_5 
+will be demodulated audio you'll notice the FFT now only has have of its side thats because
+by demoduling we have thrown out half our signal. Audio data is real valued data not 
+complex thus our FFTs going forward will only show half as much. 
 
-## Volume Scale the data   X_6  = scale X_5 
+## Downconvert to Audio X_6 = X_5[0:n:dec]
+![Downconvert to Audio](./data/decimateReal.png)
 
-X_6 is raw audio samples we can print them to a file as int16_t and play them with
+We downconvert X_5 to a mono audio the same way as before. Our audio bandwidth 
+is Freq = 44.1 KHz
+
+
+## Volume Scale the data   X_7  = scale X_6 
+![Scale volume](./data/VolumeScaleReal.png)
+
+We now will scale X_6 so we don't blow out our speaker out when we play the audio. 
+We are simpling normalizing and scaling by 10K.
+
+## Play audio!!
+
+Now we can play the audio by printing to a file the data as int16 data. I've done this
+in the audio.out file its 10 seconds from the FM transmission sample i got from online
+the quality is surprisingly high. To play it run the following
+
 $ aplay -f S16_LE -r 44100 -c2 audio.out
-
 
 
 
