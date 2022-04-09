@@ -38,7 +38,7 @@ __global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
         float p =  (cuCrealf(k1) * ( cuCimagf(k) - cuCimagf(k2)))
                  - (cuCimagf(k1) * ( cuCrealf(k) - cuCrealf(k2)));
         //        ----------------------------------------------
-        p =  p * 1000; //(1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
+        p =  p * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
         
         r[idx] = p;
         idx += stride;
@@ -352,12 +352,10 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     // exec
     // center by removing drift
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
-    printSampleC(s, d_ca, 50);
 
     printf("Filtering at baseband 200KHz\n");
     // filter out noise
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
-    printSampleC(s, d_cb, 50);
 
     printf("Decimating signal\n");
     // Decimate to bandwidth = 200Khz
@@ -367,13 +365,11 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     int n_d1 = n / dec_rate; // trunction keeps us in band
 
     printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
-    printSampleC(s, d_ca, 50);
     printf("Polar discrimnate\n");
     
     // potential plot a constellation for debug
     // polar discriminate to demoulate the signal this is a C2R operation
     checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_ca, d_ra)) );
-    printSampleR(s, d_ra, 50);
 
     printf("Convert to audio sampler rate\n");
     
@@ -381,7 +377,6 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     dec_rate = int(freq_sr_d1/ 44100.0); //audio samples will be at ~44.1Khz
     //float freq_sr_d2 = freq_sr_d1 / dec_rate;
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
-    printSampleR(s, d_rb, 50);
     int n_d2 = n_d1 / dec_rate; // stay in band
     
     printf("Decimated %d -> %d at a rate of %d\n", n_d1, n_d2, dec_rate);
