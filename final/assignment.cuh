@@ -139,7 +139,8 @@ void plot_xy_data(double* x, double *y, int n);
 */
 void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float f_c, // freqency center
-    float f_s  // sample rate
+    float f_s,  // sample rate
+    const char * title
 );
 
 cuFloatComplex* genNoise(cudaStream_t s, int n);
