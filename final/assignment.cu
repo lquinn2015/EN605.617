@@ -252,7 +252,7 @@ void plotfft(float f_c, float f_s, int n, float* db, const char* title){
     float highF = Fc_Mhz + Fs_Mhz/2;
     
     fprintf(gnuplot, "set term wxt %d size 500,500\n", cplot++);
-    fprintf(gnuplot, "set ylabel 'loss dB'; set xlabel 'freq Mhz'; set xtics ('%.1f' 1, '%.1f' %d, '%.1f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
+    fprintf(gnuplot, "set ylabel 'loss dB'; set xlabel 'freq Mhz'; set xtics ('%.3f' 1, '%.3f' %d, '%.3f' %d)\n", lowF, Fc_Mhz, n/2, highF, n-1);
     fprintf(gnuplot, "plot '-' smooth frequency with linespoints lt -1 title '%s' \n", title);
     for(int i = 0; i < n; i++){
         fprintf(gnuplot,"%d  %f\n", i, db[i]);
@@ -434,7 +434,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_ca, d_ra)) );
     
     checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
-    create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d1, "Demodulate complex" );
+    create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d1, "Demodulate Real" );
 
    
     //  decimate to audio
@@ -486,14 +486,14 @@ int main(int argc, char** argv)
     #ifdef DPLOT
     gnuplot = popen("gnuplot -persistent", "w");
     #else
-    gnuplot = fopen("gplot", "w"); // with live ploting off write theplots to a file
+    gnuplot = fopen("./data/gplot", "w"); // with live ploting off write theplots to a file
     #endif
 
     // Sample Rate ends up being 44Khz by convention
     printf("Running fm_demod on signal\n");
     float *audio = fm_demod(z, &n, -0.178e6, 2.5e6); 
 
-    FILE* ad = fopen("audio.out", "w+");
+    FILE* ad = fopen("./data/audio.out", "w+");
     printf("Printing audio samples 2 a file\n");
     for(int i = 0; i<n; i++){
         int16_t sample = (int16_t) audio[i];

@@ -75,33 +75,27 @@ X_4 = X_3[0:n:D]
 
 Thus we end up with 12x less data whose sample rate is at 200 KHz
 
-## Demodulate:  X_5 = Freq_Disc(X_4)
+## Demodulate:  X_5 = 
 
-In order to demodulate the signal we are going to use a frequency discriminator The equation
-looks as follows
+We now have wideband FM data in X_4 thus we can attempt to demodulate it. If you open
+up a DSP text book method one will say we can do the arctanget of Q/I to get theta and
+calculate the derivative of theta to get X_5 i.e demodulated data. However I plan to 
+eventually put this design into a FPGA so we are going to not do that. Instead I am 
+advocating for plan 2 found in ref[5]. We will take the derivate of the equation i.e
 
-X_5[n] =  ComplexConjugate(X_4[n+1]) * X_4[n] 
+Let z(t) = I(t) + iQ(t)   where I,Q are our quadratures.  We are interested the derivate of $theta(t)$. Method 1:     $\theta(t) = \tan^{-1}(\frac{Q(t)}{I{t}})$  and with a differentiator we can find $\frac{\delta\theta(t)}{dt} = \theta(t) - \theta(t-1)$.  This works but arctangent is a large and difficult function so we can take the derivate of $\theta(t)$ as follows.
 
+\theta = tan^{-1}(\frac{Q}{I}) 
+\frac{d}{dt}\theta = \frac{d}{dt} tan^{-1}(\frac{Q}{I})
+\frac{\delta\theta}{dt}=  \frac{I \frac{dQ}{dt}  - Q \frac{dI}{dt}}{ I^2  + Q^2} 
 
-## De-Emphasize 
+This is easy to compute even on a FPGA since it is only scalar multiplications! Thus X_5 will be demodulated audio
 
-This might be skipable to some extent but according to wikipedia Noise will dispropotionally
-effect higher frequenies more. So FM transmitters boost there higher frequencies in order to
-counter this. Thus we can boost quality by using a preemphaize filter. This is a stretch goal
-for me though because its not a big boost in quality but requires figuring out how to implement
-this type of filter which is different from the filter we made before. 
+## Volume Scale the data   X_6  = scale X_5 
 
+X_6 is raw audio samples we can print them to a file as int16_t and play them with
+$ aplay -f S16_LE -r 44100 -c2 audio.out
 
-## Decimate  to audio   X_6 = X_5[0:n:D]
-
-We are trying to only get the mono data which is only at 44-48 Khz, so downsample again to
-get to the correct bandwidth
-
-f_r'' = f_r' / D = f_r / 12 / D ->  D = 4.75 ... 5 
-
-## Play X_6
-
-X_6 is mono data we just need to play it now.   
 
 
 
@@ -129,3 +123,7 @@ X_6 is mono data we just need to play it now.
     basic c implementation which was important because the math involved is really difficult
     I am not an EE person but I am a Math person. If someone can tell me the general idea
     I can probably implement it. 
+
+[5]  https://www.embedded.com/dsp-tricks-frequency-demodulation-algorithms/#:~:text=An%20often%20used%20technique%20for,in%20Figure%2013%E2%80%9360%20below%20/ 
+
+    I original planned on doing a PDS i.e theta =  arctan(Q/I),  dTheta = theta(t) - theta(t-1).  However I had problems with scaling here so I instead used a method described here.
