@@ -37,7 +37,7 @@ __global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
         float p =  (cuCrealf(k1) * ( cuCimagf(k) - cuCimagf(k2)))
                  - (cuCimagf(k1) * ( cuCrealf(k) - cuCrealf(k2)));
         //        ----------------------------------------------
-        p =  p * 1000;// * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
+        p =  p * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
         
         r[idx] = p;
         idx += stride;
@@ -399,7 +399,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaMemsetAsync(d_ra, 0, (n_d2+2)*sizeof(float), s) ); 
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
     printf("Scaling vector\n");
-    //checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
+    checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
    
     
  
