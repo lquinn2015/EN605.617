@@ -200,7 +200,7 @@ __global__ void fft2amp(int n, cuFloatComplex *fft, float *db)
 cuFloatComplex* readData(int *n, double *&idata, double *&qdata)
 {
     // IQ data from FMcapture1.dat
-    FILE* f = fopen("FMcapture1.dat", "r");
+    FILE* f = fopen("./data/FMcapture1.dat", "r");
     fseek(f, 0, SEEK_END);
     int samples = ftell(f) / 2; // IQ samples are 8 bit unsigned  values
     rewind(f);
@@ -484,9 +484,9 @@ int main(int argc, char** argv)
     free(idata); free(qdata); // unused
 
     #ifdef DPLOT
-    gnuplot = popen("gnuplot -persistent", "w");
+    gnuplot = popen("gnuplot -persistent", "w+");
     #else
-    gnuplot = fopen("./data/gplot", "w"); // with live ploting off write theplots to a file
+    gnuplot = fopen("data/gplot", "w+"); // with live ploting off write theplots to a file
     #endif
 
     // Sample Rate ends up being 44Khz by convention
