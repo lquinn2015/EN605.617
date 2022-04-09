@@ -392,7 +392,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaMemsetAsync(d_ra, 0, (n_d2+2)*sizeof(float), s) ); 
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
     printf("Scaling vector\n");
-    checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
+    //checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
     
     printf("Copying data back to sig_out\n");
     *n_out = n_d2; // log the final samples count
