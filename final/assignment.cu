@@ -432,7 +432,7 @@ int main(int argc, char** argv)
 
     // Sample Rate ends up being 44Khz by convention
     printf("Running fm_demod on signal\n");
-    float *audio = fm_demod(z, &n, 0.178e6, 2.5e6); 
+    float *audio = fm_demod(z, &n, -0.178e6, 2.5e6); 
 
     FILE* ad = fopen("audio.out", "w+");
     printf("Printing audio samples 2 a file\n");
