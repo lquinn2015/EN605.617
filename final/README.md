@@ -43,7 +43,9 @@ at 2.5 MHz our delta shift freq should be in MHz.
  Thus the following parameters make sense
 
 f_t = 100.3 ->  f_d = f_t - f_c  =  100.3 - 100.122 =  0.178 MHz 
+
 f_t =  99.5 ->  f_d = f_t - f_c  =   99.5 - 100.122 = -0.622 Mhz
+
 f_t = 101.1 ->  f_d = f_t - f_c  =  101.1 - 100.122 =  0.978 Mhz
 
 These are the strongest signals in our data. This is clear if you look at a spectrogram of 
@@ -78,12 +80,13 @@ the array of data and reduce it to be smaller. Notable the following are chaning
 lower for all future calculation
 
 D = Decimation rate = round_down(f_s /f_fmbw) =  round_down(2.5MHz/ 200 KHz) = 12
+
 X_4 = X_3[0:n:D]
 
 Thus we end up with 12x less data whose sample rate is at 200 KHz
 
 ## Demodulate:  X_5 = 
-![Demodulate FM](./data/demodulate_real.png)
+![Demodulate FM](./data/demodulated_real.png)
 
 We now have wideband FM data in X_4 thus we can attempt to demodulate it. If you open
 up a DSP text book method one will say we can do the arctanget of Q/I to get theta and
@@ -91,10 +94,16 @@ calculate the derivative of theta to get X_5 i.e demodulated data. However I pla
 eventually put this design into a FPGA so we are going to not do that. Instead I am 
 advocating for plan 2 found in ref[5]. We will take the derivate of the equation i.e
 
-Let z(t) = I(t) + iQ(t)   where I,Q are our quadratures.  We are interested the derivate of $theta(t)$. Method 1:     $\theta(t) = \tan^{-1}(\frac{Q(t)}{I{t}})$  and with a differentiator we can find $\frac{\delta\theta(t)}{dt} = \theta(t) - \theta(t-1)$.  This works but arctangent is a large and difficult function so we can take the derivate of $\theta(t)$ as follows.
+Let z(t) = I(t) + iQ(t), where I,Q are our quadratures.  We are interested the derivate of 
+$theta(t)$. I.e  $\theta(t) = \tan^{-1}(\frac{Q(t)}{I{t}})$  and with a differentiator 
+we can find $\frac{\delta\theta(t)}{dt} = \theta(t) - \theta(t-1)$.  This works but 
+arctangent is a large and difficult function to implement. I want the algorithm to be 
+easy to put on an FPGA so we can take the derivate of $\theta(t)$ as follows.
 
 \theta = tan^{-1}(\frac{Q}{I}) 
+
 \frac{d}{dt}\theta = \frac{d}{dt} tan^{-1}(\frac{Q}{I})
+
 \frac{\delta\theta}{dt}=  \frac{I \frac{dQ}{dt}  - Q \frac{dI}{dt}}{ I^2  + Q^2} 
 
 This is easy to compute even on a FPGA since it is only scalar multiplications! Thus X_5 
@@ -122,9 +131,6 @@ in the audio.out file its 10 seconds from the FM transmission sample i got from 
 the quality is surprisingly high. To play it run the following
 
 $ aplay -f S16_LE -r 44100 -c2 audio.out
-
-
-
 
 
 # References 
