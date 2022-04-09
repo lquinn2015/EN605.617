@@ -338,7 +338,6 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     int n = *n_out;
     printf("FM demodulating %d at %f sample rate\n", n, freq_sr);
     
-    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Original data" );
 
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s) );
@@ -350,6 +349,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaMalloc((void**)&d_rb, sizeof(float)*n) );
     checkCuda( cudaMemcpyAsync(d_ca, &signal[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
    
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Original data" );
     
     // center by removing drift
     printf("Shifting signal to baseband\n");
