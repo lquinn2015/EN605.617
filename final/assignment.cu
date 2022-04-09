@@ -30,15 +30,15 @@ __global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
 
     while(idx < n) {
         
-        if(idx+2 > n) break;
+        if(idx-2 < 0) continue;
         cuFloatComplex k = sig[idx];
-        cuFloatComplex k1 = sig[idx+1];
-        cuFloatComplex k2 = sig[idx+2];
+        cuFloatComplex k1 = sig[idx-1];
+        cuFloatComplex k2 = sig[idx-2];
 
         float p =  (cuCrealf(k1) * ( cuCimagf(k) - cuCimagf(k2)))
                  - (cuCimagf(k1) * ( cuCrealf(k) - cuCrealf(k2)));
         //        ----------------------------------------------
-        p =  p * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
+        p =  p * 1000 * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
         
         r[idx] = p;
         idx += stride;
