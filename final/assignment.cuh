@@ -76,10 +76,20 @@ __global__ void decimateC2C(int n, int dec_rate, cuFloatComplex *S, cuFloatCompl
 __global__ void decimateR2R(int n, int dec_rate, float *S, float *R);
 
 /*
-    Calculates the polar discriminate of a complex signal and converts it to the real
-        domain
-   
-    eqiv  ->  z[i] .conj x[i+1]
+    a default PDS requires me to write a filter after it instead following
+    https://www.embedded.com/dsp-tricks-frequency-demodulation-algorithms/#:~:text=An%20often%20used%20technique%20for,in%20Figure%2013%E2%80%9360%20below%20.
+
+    We can skip the arctan by actually computing the derivate i.e
+
+    theta(t) = atan( Q(t)/I(t))  let  r(t) = Q(t) / I(t) 
+    
+    d/dt theta(z) =  1 / ( 1 + r(t)^2) * r'(t)
+            =  1/(1+Q^2/I^2) * IQ'-QI' / I^2    mul by (I^2/I^2)
+            =  (IQ' - QI')  /  I^2 + Q^2
+        
+        dTheta(t)/dt =   (Q(k)-Q(k-2))I(k-1)      *     1/(I^2 + Q^2)
+                        -(I(k)-I(k-2))Q(k-1)  
+        
 */
 __global__ void pdsC2R(int n, cuFloatComplex *S, float *R);
 
