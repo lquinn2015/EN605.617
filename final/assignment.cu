@@ -353,12 +353,14 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     // exec
     // center by removing drift
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
+    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
 
     printf("Filtering at baseband 200KHz\n");
     // filter out noise
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
     
-    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaMemcpyAsync(signal, d_cb, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
     create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
 
     printf("Decimating signal\n");
