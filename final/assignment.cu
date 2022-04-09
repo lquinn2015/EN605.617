@@ -357,6 +357,9 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     printf("Filtering at baseband 200KHz\n");
     // filter out noise
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
+    
+    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
 
     printf("Decimating signal\n");
     // Decimate to bandwidth = 200Khz
@@ -366,7 +369,6 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     int n_d1 = n / dec_rate; // trunction keeps us in band
 
     checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
-
     create_fft(signal, 5000, 0, s, 100.3e6, freq_sr_d1, "Decimate complex" );
 
     printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
