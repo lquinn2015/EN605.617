@@ -26,7 +26,7 @@ __global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
 {
     const int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     unsigned int stride = gridDim.x * blockDim.x;
-    unsigned int idx = tid;
+    int idx = tid;
 
     while(idx < n) {
         
