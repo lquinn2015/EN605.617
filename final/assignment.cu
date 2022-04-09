@@ -38,7 +38,7 @@ __global__ void pdsC2R(int n, cuFloatComplex *sig, float *r)
         float p =  (cuCrealf(k1) * ( cuCimagf(k) - cuCimagf(k2)))
                  - (cuCimagf(k1) * ( cuCrealf(k) - cuCrealf(k2)));
         //        ----------------------------------------------
-        p =  p * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k)));
+        p =  p * (1 / (cuCrealf(k) * cuCrealf(k) + cuCimagf(k) * cuCimagf(k))) * 1000;
         
         r[idx] = p;
         idx += stride;
