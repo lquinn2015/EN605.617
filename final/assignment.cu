@@ -433,7 +433,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     // Demodulate 
     checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_ca, d_ra)) );
     
-    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
     create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d1, "Demodulate complex" );
 
    
@@ -443,7 +443,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     float freq_sr_d2 = freq_sr_d1 / dec_rate;
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
     int n_d2 = n_d1 / dec_rate; // stay in band
-    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
     create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d2, "Decimate real"); 
     printf("Decimated %d -> %d at a rate of %d\n", n_d1, n_d2, dec_rate);
 
