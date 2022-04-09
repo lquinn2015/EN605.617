@@ -301,7 +301,7 @@ void create_fftR2C(float *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // lock and max space
 
     checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
-    checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
+    checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(float), cudaMemcpyHostToDevice, s) );
 
     // setup FFT
     printf("Running FFT \n");
