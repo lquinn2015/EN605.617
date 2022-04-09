@@ -455,7 +455,7 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     printf("Scaling vector\n");
     checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
    
-    checkCuda( cudaMemcpyAsync(sigClone, d_rb, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaMemcpyAsync(sigClone, d_rb, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
     create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d2, "Scale Real" ); 
     
  
