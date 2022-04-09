@@ -337,6 +337,8 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     // setup
     int n = *n_out;
     printf("FM demodulating %d at %f sample rate\n", n, freq_sr);
+    
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Original data" );
 
     cudaStream_t s;
     checkCuda( cudaStreamCreate(&s) );
@@ -349,22 +351,23 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaMemcpyAsync(d_ca, &signal[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
    
     
-    printf("Shifting signal to baseband\n");
-    // exec
     // center by removing drift
+    printf("Shifting signal to baseband\n");
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
     checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
-    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Signal Shifted" );
 
-    printf("Filtering at baseband 200KHz\n");
+
     // filter out noise
+    printf("Filtering at baseband 200KHz\n");
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
     
     checkCuda( cudaMemcpyAsync(signal, d_cb, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
     create_fft(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
 
-    printf("Decimating signal\n");
+
     // Decimate to bandwidth = 200Khz
+    printf("Decimating signal\n");
     int dec_rate = int(freq_sr / 2e5);
     float freq_sr_d1 = freq_sr / dec_rate;
     checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_cb, d_ca)));
