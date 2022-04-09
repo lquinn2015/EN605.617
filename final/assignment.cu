@@ -263,7 +263,26 @@ void plotfft(float f_c, float f_s, int n, float* db, const char* title){
 
 }
 
+void printSampleC(cudaStream_t s, cuFloatComplex* d_c, int n){
 
+    cuFloatComplex *c = (cuFloatComplex *) malloc(sizeof(cuFloatComplex)* n);
+    checkCuda( cudaMemcpyAsync(c, d_c, sizeof(cuFloatComplex)*n, cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaStreamSynchronize(s) );
+    for(int i = 0; i < n; i++){
+        printf("z[%d] = %f  +  i*%f\n", i, cuCrealf(c[i]), cuCimagf(c[i]));
+    }
+    free(c);
+}
+void printSampleR(cudaStream_t s, float* d_c, int n){
+
+    float *c = (float *) malloc(sizeof(float)* n);
+    checkCuda( cudaMemcpyAsync(c, d_c, sizeof(float)*n, cudaMemcpyDeviceToHost, s) );
+    checkCuda( cudaStreamSynchronize(s) );
+    for(int i = 0; i < n; i++){
+        printf("(d)Theta[%d] = %f \n", i, c[i]);
+    }
+    free(c);
+}
     
 void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     float f_c, // freqency center 
@@ -333,62 +352,52 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     // exec
     // center by removing drift
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
-    checkCuda( cudaStreamSynchronize(s) );
+    printSampleC(s, d_cb, 5000);
 
     printf("Filtering at baseband 200KHz\n");
     // filter out noise
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
-    checkCuda( cudaStreamSynchronize(s) );
+    printSampleC(s, d_cb, 5000);
 
     printf("Decimating signal\n");
     // Decimate to bandwidth = 200Khz
     int dec_rate = int(freq_sr / 2e5);
     float freq_sr_d1 = freq_sr / dec_rate;
-    checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_ca, d_cb)));
+    checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_cb, d_ca)));
     int n_d1 = n / dec_rate; // trunction keeps us in band
 
     printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
-    
-    checkCuda( cudaStreamSynchronize(s) );
+    printSampleC(s, d_ca, 5000);
     printf("Polar discrimnate\n");
     
     // potential plot a constellation for debug
     // polar discriminate to demoulate the signal this is a C2R operation
-    checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_cb, d_ra)) );
+    checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_ca, d_ra)) );
+    printSampleR(s, d_ra, 5000);
 
-    checkCuda( cudaStreamSynchronize(s) );
     printf("Convert to audio sampler rate\n");
     
     // skiping de-emphasis fitler and just decimate to audio
     dec_rate = int(freq_sr_d1/ 44100.0); //audio samples will be at ~44.1Khz
     //float freq_sr_d2 = freq_sr_d1 / dec_rate;
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
+    printSampleR(s, d_rb, 5000);
     int n_d2 = n_d1 / dec_rate; // stay in band
     
     printf("Decimated %d -> %d at a rate of %d\n", n_d1, n_d2, dec_rate);
 
     // scale volume
-    checkCuda( cudaStreamSynchronize(s) );
     printf("Finding max Mag on %d samples\n", n_d2);
    
     checkCuda( cudaMemsetAsync(d_ra, 0, (n_d2+2)*sizeof(float), s) ); 
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
-        // note max is stored in d_ra[n_n2] by findMaxDef
-    
-    checkCuda( cudaStreamSynchronize(s) );
     printf("Scaling vector\n");
-    
     checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
     
-    checkCuda( cudaStreamSynchronize(s) );
     printf("Copying data back to sig_out\n");
-
-
     *n_out = n_d2; // log the final samples count
     float *sig_out = (float*) malloc(n_d2 * sizeof(float));
     checkCuda( cudaMemcpyAsync(sig_out, d_rb, n_d2*sizeof(float), cudaMemcpyDeviceToHost,s) );
-
-
     printf("Cleanup\n");
 
     // release resources
