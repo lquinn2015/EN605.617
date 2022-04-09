@@ -397,26 +397,14 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     checkCuda( cudaMalloc((void**)&d_cb, sizeof(cuFloatComplex)*n) );
     checkCuda( cudaMalloc((void**)&d_ra, sizeof(float)*n) );
     checkCuda( cudaMalloc((void**)&d_rb, sizeof(float)*n) );
-
-    // debug draw
-    checkCuda( cudaMemcpyAsync(d_ca, &signal[0], n*sizeof(cuFloatComplex), cudaMemcpyHostToDevice,s) );
-   
-    create_fftC2C(signal, 5000, 0, s, 100.3e6, freq_sr, "Original data" );
     
     // center by removing drift
     printf("Shifting signal to baseband\n");
     checkCudaKernel( (freqShift<<<8,1024,0, s>>>(n, d_ca, freq_drift, 0, freq_sr)) );
-    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
-    create_fftC2C(signal, 5000, 0, s, 100.3e6, freq_sr, "Signal Shifted" );
-
 
     // filter out noise
     printf("Filtering at baseband 200KHz\n");
     checkCudaKernel( (blackmanFIR_200KHz<<<8,1024,0, s>>>(n, d_ca, d_cb)) );
-    
-    checkCuda( cudaMemcpyAsync(signal, d_cb, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
-    create_fftC2C(signal, 5000, 0, s, 100.3e6, freq_sr, "Filter" );
-
 
     // Decimate to bandwidth = 200Khz
     printf("Decimating signal\n");
@@ -424,41 +412,26 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     float freq_sr_d1 = freq_sr / dec_rate;
     checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_cb, d_ca)));
     int n_d1 = n / dec_rate; // trunction keeps us in band
-
-    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
-    create_fftC2C(signal, 5000, 0, s, 100.3e6, freq_sr_d1, "Decimate complex" );
-
     printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
     
     // Demodulate 
     checkCudaKernel( (pdsC2R<<<8, 1024, 0, s>>>(n_d1, d_ca, d_ra)) );
     
-    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
-    create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d1, "Demodulate Real" );
-
    
     //  decimate to audio
     printf("Convert to audio sampler rate\n");
     dec_rate = int(freq_sr_d1/ 44100.0); //audio samples will be at ~44.1Khz
-    float freq_sr_d2 = freq_sr_d1 / dec_rate;
+    //float freq_sr_d2 = freq_sr_d1 / dec_rate;
     checkCudaKernel( (decimateR2R<<<8, 1024, 0, s>>>(n, dec_rate, d_ra, d_rb)) );
     int n_d2 = n_d1 / dec_rate; // stay in band
-    checkCuda( cudaMemcpyAsync(sigClone, d_ra, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
-    create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d2, "Decimate real"); 
     printf("Decimated %d -> %d at a rate of %d\n", n_d1, n_d2, dec_rate);
 
     // scale volume
-    printf("Finding max Mag on %d samples\n", n_d2);
-   
+    printf("Scaling volume\n");
     checkCuda( cudaMemsetAsync(d_ra, 0, (n_d2+2)*sizeof(float), s) ); 
     checkCudaKernel( (findMaxR2RMag<<<8,1024, 0, s>>>(n_d2, d_rb, d_ra)) ); 
-    printf("Scaling vector\n");
     checkCudaKernel( (scaleVec<<<8, 1024, 0, s>>>(n_d2, d_rb, &d_ra[n_d2])) );
    
-    checkCuda( cudaMemcpyAsync(sigClone, d_rb, n*sizeof(float), cudaMemcpyDeviceToHost, s) );
-    create_fftR2C(sigClone, 5000, 0, s, 100.3e6, freq_sr_d2, "Scale Real" ); 
-    
- 
     printf("Copying data back to sig_out\n");
     *n_out = n_d2; // log the final samples count
     float *sig_out = (float*) malloc(n_d2 * sizeof(float));
