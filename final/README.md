@@ -47,7 +47,8 @@ f_t =  99.5 ->  f_d = f_t - f_c  =   99.5 - 100.122 = -0.622 Mhz
 f_t = 101.1 ->  f_d = f_t - f_c  =  101.1 - 100.122 =  0.978 Mhz
 
 These are the strongest signals in our data. This is clear if you look at a spectrogram of 
-the data. 
+the data. Direction is important we need to shift our channel of choice to baseband for
+our filter to work. Thus to go left we subtract our drift frequency to go right we add
 
 ## Low Pass Filter:  X_3 = conv(X_2, H)
 ![Low Pass Filter](./data/filter_data.png)
