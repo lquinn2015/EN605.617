@@ -289,6 +289,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     const char* title
 ){
     
+    checkCuda( cudaStreamSynchronize(s) ); // ensure we are synced
     printf("Starting FFT\n");
     cufftComplex *d_sig, *d_fft;
     float * d_db; 
@@ -297,6 +298,7 @@ void create_fft(cuFloatComplex *z, int n, int offset, cudaStream_t s,
     checkCuda( cudaMalloc((void**)&d_sig, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_fft, sizeof(cufftComplex) * n) );
     checkCuda( cudaMalloc((void**)&d_db, sizeof(float) * n + 2) ); // lock and max space
+
     checkCuda( cudaMemsetAsync(d_db, 0, sizeof(float) * n +2, s) );
     checkCuda( cudaMemcpyAsync(d_sig, &z[offset], n*sizeof(cufftComplex), cudaMemcpyHostToDevice, s) );
 
@@ -362,6 +364,10 @@ float* fm_demod(cuFloatComplex *signal, int *n_out, float freq_drift, float freq
     float freq_sr_d1 = freq_sr / dec_rate;
     checkCudaKernel( (decimateC2C<<<8, 1024, 0, s>>>(n, dec_rate, d_cb, d_ca)));
     int n_d1 = n / dec_rate; // trunction keeps us in band
+
+    checkCuda( cudaMemcpyAsync(signal, d_ca, n*sizeof(cuFloatComplex), cudaMemcpyDeviceToHost, s) );
+
+    create_fft(signal, 5000, 0, s, 100.3e6, freq_sr_d1, "Decimate complex" );
 
     printf("Signal decimated %d -> %d at rate of %d\n", n, n_d1, dec_rate);
     printf("Polar discrimnate\n");
@@ -432,7 +438,7 @@ int main(int argc, char** argv)
     }
     fclose(ad);
 
-    plot_wave(audio, 25000);
+    //plot_wave(audio, 25000);
 
 
     free(audio);   
