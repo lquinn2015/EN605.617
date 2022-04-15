@@ -35,3 +35,32 @@ __kernel void convolve(
     
 	output[y * get_global_size(0) + x] = sum;
 }
+
+__kernel void convolveManhattan(
+	const __global  float * const input,
+    __constant float * const mask,
+    __global  float * const output,
+    const int inputWidth,
+    const int maskWidth)
+{
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+
+    // Manhattan distance between to vectorss is abs(x_1-x_2) + abs(y_1-y_2)
+    const float mScale =  1 / (abs(x - intputWidth/2) + abs(y - inputWidth/2));
+    
+
+    uint sum = 0;
+    for (int r = 0; r < maskWidth; r++)
+    {
+        const int idxIntmp = (y + r) * inputWidth + x;
+
+        for (int c = 0; c < maskWidth; c++)
+        {
+			sum += mask[(r * maskWidth)  + c] * input[idxIntmp + c];
+        }
+    } 
+    
+	output[y * get_global_size(0) + x] = sum * mScale;
+}

@@ -8,6 +8,7 @@
 //            http://www.openclprogrammingguide.com
 //
 
+// Modified by lquinn
 
 // Convolution.cpp
 //
@@ -29,34 +30,20 @@
 #define CL_CALLBACK
 #endif
 
-// Constants
-const unsigned int inputSignalWidth  = 8;
-const unsigned int inputSignalHeight = 8;
 
-cl_uint inputSignal[inputSignalHeight][inputSignalWidth] =
-{
-	{3, 1, 1, 4, 8, 2, 1, 3},
-	{4, 2, 1, 1, 2, 1, 2, 3},
-	{4, 4, 4, 4, 3, 2, 2, 2},
-	{9, 8, 3, 8, 9, 0, 0, 0},
-	{9, 3, 3, 9, 0, 0, 0, 0},
-	{0, 9, 0, 8, 0, 0, 0, 0},
-	{3, 0, 8, 8, 9, 4, 4, 4},
-	{5, 9, 8, 1, 8, 1, 1, 1}
-};
+const unsigned int i_sigWidth = 49;
+const unsigned int i_sigHeight = 49;
+float i_sig[i_sigHeight][i_sigWidth];
 
-const unsigned int outputSignalWidth  = 6;
-const unsigned int outputSignalHeight = 6;
+const unsigned int i_maskWidth = 7;
+const unsigned int i_maskHeight = 7;
+float i_mask[i_maskWidth][i_maskHeight];
 
-cl_uint outputSignal[outputSignalHeight][outputSignalWidth];
-
-const unsigned int maskWidth  = 3;
-const unsigned int maskHeight = 3;
-
-cl_uint mask[maskHeight][maskWidth] =
-{
-	{1, 1, 1}, {1, 0, 1}, {1, 1, 1},
-};
+// the output is inputSize - sizeof(filter) - 1 because the center of the 
+// filter doesn't clip ideally if you want to clip we can do that too
+const unsigned int o_sigWidth  = i_sigWidth - i_maskWidth - 1;
+const unsigned int o_sigHeight  = i_sigHeight - i_maskHeight - 1;
+float o_sig[o_sigHeight][o_sigWidth];
 
 ///
 // Function to check and handle OpenCL errors
@@ -81,6 +68,108 @@ void CL_CALLBACK contextCallback(
 	exit(1);
 }
 
+
+void genSquareMatrix(float** mat, int sizeX, int sizeY)
+{
+    srand(time(NULL));
+    for(int y = 0; y < sizeY; y++){
+        for(int x = 0; x < sizeX; x++){
+            mat[y][x] = rand() % 50;
+        }
+    }
+}
+    cl_context context = NULL;
+	cl_command_queue queue;
+	cl_program program;
+
+
+// I don't like the complex however it reduces code size signifcantly
+void launchMatKernel(const char* kernelName, 
+    cl_context *context, 
+    cl_command_queue *queue, 
+    cl_program *program,
+    int sizeofSigType,  // sizeof type filter, out, and sig must all be same type
+    void* sig, unsigned int sigH, unsigned int sigW,
+    void* out, unsigned int outH, unsigned int outW, 
+    void* filter, unsigned int filterH, unsigned int filterW
+    )
+{
+
+    cl_int errNum;
+	cl_kernel kernel;
+	cl_mem inputSignalBuffer;
+	cl_mem outputSignalBuffer;
+	cl_mem maskBuffer;
+	
+    // Create kernel object
+	kernel = clCreateKernel(
+		*program,
+		 kernelName,
+		&errNum);
+	checkErr(errNum, "clCreateKernel");
+
+	// Now allocate buffers
+	inputSignalBuffer = clCreateBuffer(
+		*context,
+		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeofSigType * sigH * sigW,
+		static_cast<void *>(sig),
+		&errNum);
+	checkErr(errNum, "clCreateBuffer(inputSignal)");
+
+	maskBuffer = clCreateBuffer(
+		*context,
+		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeofSigType * filterH * filterW,
+		static_cast<void *>(filter),
+		&errNum);
+	checkErr(errNum, "clCreateBuffer(mask)");
+
+	outputSignalBuffer = clCreateBuffer(
+		*context,
+		CL_MEM_WRITE_ONLY,
+		sizeofSigType * outH * outW,
+		NULL,
+		&errNum);
+	checkErr(errNum, "clCreateBuffer(outputSignal)");
+
+    errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
+	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
+    errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &outputSignalBuffer);
+	errNum |= clSetKernelArg(kernel, 3, sizeof(unsigned int), &sigW);
+	errNum |= clSetKernelArg(kernel, 4, sizeof(unsigned int), &filterW);
+	checkErr(errNum, "clSetKernelArg");
+
+	const size_t globalWorkSize[2] = { outW, outH };
+    const size_t localWorkSize[2]  = { 1, 1 };
+
+    // Queue the kernel up for execution across the array
+    errNum = clEnqueueNDRangeKernel(
+		*queue, 
+		kernel, 
+		2,
+		NULL,
+        globalWorkSize, 
+		localWorkSize,
+        0, 
+		NULL, 
+		NULL);
+	checkErr(errNum, "clEnqueueNDRangeKernel");
+    
+	errNum = clEnqueueReadBuffer(
+		*queue, 
+		outputSignalBuffer, 
+		CL_TRUE,
+        0, 
+		sizeofSigType * outH * outW, 
+		out,
+        0, 
+		NULL, 
+		NULL);
+	checkErr(errNum, "clEnqueueReadBuffer");
+
+}
+
 ///
 //	main() for Convoloution example
 //
@@ -94,10 +183,6 @@ int main(int argc, char** argv)
     cl_context context = NULL;
 	cl_command_queue queue;
 	cl_program program;
-	cl_kernel kernel;
-	cl_mem inputSignalBuffer;
-	cl_mem outputSignalBuffer;
-	cl_mem maskBuffer;
 
     // First, select an OpenCL platform to run on.  
 	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
@@ -208,40 +293,8 @@ int main(int argc, char** argv)
         std::cerr << buildLog;
 		checkErr(errNum, "clBuildProgram");
     }
-
-	// Create kernel object
-	kernel = clCreateKernel(
-		program,
-		"convolve",
-		&errNum);
-	checkErr(errNum, "clCreateKernel");
-
-	// Now allocate buffers
-	inputSignalBuffer = clCreateBuffer(
-		context,
-		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(cl_uint) * inputSignalHeight * inputSignalWidth,
-		static_cast<void *>(inputSignal),
-		&errNum);
-	checkErr(errNum, "clCreateBuffer(inputSignal)");
-
-	maskBuffer = clCreateBuffer(
-		context,
-		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		sizeof(cl_uint) * maskHeight * maskWidth,
-		static_cast<void *>(mask),
-		&errNum);
-	checkErr(errNum, "clCreateBuffer(mask)");
-
-	outputSignalBuffer = clCreateBuffer(
-		context,
-		CL_MEM_WRITE_ONLY,
-		sizeof(cl_uint) * outputSignalHeight * outputSignalWidth,
-		NULL,
-		&errNum);
-	checkErr(errNum, "clCreateBuffer(outputSignal)");
-
-	// Pick the first device and create command queue.
+	
+    // Pick the first device and create command queue.
 	queue = clCreateCommandQueue(
 		context,
 		deviceIDs[0],
@@ -249,50 +302,22 @@ int main(int argc, char** argv)
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
-    errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
-	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
-    errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &outputSignalBuffer);
-	errNum |= clSetKernelArg(kernel, 3, sizeof(cl_uint), &inputSignalWidth);
-	errNum |= clSetKernelArg(kernel, 4, sizeof(cl_uint), &maskWidth);
-	checkErr(errNum, "clSetKernelArg");
+    genSquareMatrix((float**)i_sig, i_sigHeight, i_sigWidth);
+    genSquareMatrix((float**)i_mask, i_maskHeight, i_maskWidth); 
 
-	const size_t globalWorkSize[2] = { outputSignalWidth, outputSignalHeight };
-    const size_t localWorkSize[2]  = { 1, 1 };
+    launchMatKernel("convolveManhattan", &context, &queue, &program,
+        sizeof(float),
+        i_sig, i_sigHeight, i_sigWidth,
+        o_sig, o_sigHeight, o_sigWidth,
+        i_mask, i_maskHeight, i_maskWidth);
 
-    // Queue the kernel up for execution across the array
-    errNum = clEnqueueNDRangeKernel(
-		queue, 
-		kernel, 
-		2,
-		NULL,
-        globalWorkSize, 
-		localWorkSize,
-        0, 
-		NULL, 
-		NULL);
-	checkErr(errNum, "clEnqueueNDRangeKernel");
-    
-	errNum = clEnqueueReadBuffer(
-		queue, 
-		outputSignalBuffer, 
-		CL_TRUE,
-        0, 
-		sizeof(cl_uint) * outputSignalHeight * outputSignalHeight, 
-		outputSignal,
-        0, 
-		NULL, 
-		NULL);
-	checkErr(errNum, "clEnqueueReadBuffer");
+    for(int y = 0; y < o_sigHeight; y++){
+        for(int x = 0; x < o_sigWidth; x++){
+            printf("%f ", o_sig[y][x]);
+        }
+        printf("\n");
+    }
 
-    // Output the result buffer
-    for (int y = 0; y < outputSignalHeight; y++)
-	{
-		for (int x = 0; x < outputSignalWidth; x++)
-		{
-			std::cout << outputSignal[y][x] << " ";
-		}
-		std::cout << std::endl;
-	}
 
     std::cout << std::endl << "Executed program succesfully." << std::endl;
 
