@@ -21,15 +21,16 @@ __kernel void convolve(
 {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
-
-    uint sum = 0;
+    
+    float sum = 0;
     for (int r = 0; r < maskWidth; r++)
     {
         const int idxIntmp = (y + r) * inputWidth + x;
 
         for (int c = 0; c < maskWidth; c++)
         {
-			sum += mask[(r * maskWidth)  + c] * input[idxIntmp + c];
+            float mC = 1 / (abs(maskWidth/2 - r) + abs(maskWidth/2 - c));
+			sum += mask[(r * maskWidth)  + c] * input[idxIntmp + c] * mC;
         }
     } 
     
@@ -43,13 +44,13 @@ __kernel void convolveManhattan(
     const int inputWidth,
     const int maskWidth)
 {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
+    const int o_x = get_global_id(0);
+    const int o_y = get_global_id(1);
 
 
     // Manhattan distance between to vectorss is abs(x_1-x_2) + abs(y_1-y_2)
-    const float mScale =  1 / (abs(x - inputWidth/2) + abs(y - inputWidth/2));
-    
+    // Conovlution o_yx = sum_{r=0}^{mH} sum_{c=0}^{mW} m[r][c] * 
+
 
     uint sum = 0;
     for (int r = 0; r < maskWidth; r++)
@@ -58,6 +59,7 @@ __kernel void convolveManhattan(
 
         for (int c = 0; c < maskWidth; c++)
         {
+            float scale = 1/(abs() + abs())
 			sum += mask[(r * maskWidth)  + c] * input[idxIntmp + c];
         }
     } 
