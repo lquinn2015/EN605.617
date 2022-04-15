@@ -51,8 +51,8 @@ __kernel void convolveManhattan(
     const int inputWidth,
     const int maskWidth)
 {
-    const int o_x = get_global_id(0);
-    const int o_y = get_global_id(1);
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
 
     float sum = 0;
     for (int r = 0; r < maskWidth; r++)
