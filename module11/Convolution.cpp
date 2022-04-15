@@ -107,7 +107,6 @@ void launchMatKernel(const char* kernelName,
 		 kernelName,
 		&errNum);
 	checkErr(errNum, "clCreateKernel");
-    printf("Kernel complied\n");
 
 
 	// Now allocate buffers
@@ -135,7 +134,6 @@ void launchMatKernel(const char* kernelName,
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(outputSignal)");
     
-    printf("Buffers made\n");
 
     errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
 	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
@@ -147,7 +145,6 @@ void launchMatKernel(const char* kernelName,
 	const size_t globalWorkSize[2] = { outW, outH };
     const size_t localWorkSize[2]  = { 1, 1 };
 
-    printf("Argument set\n");
 
     // Queue the kernel up for execution across the array
     errNum = clEnqueueNDRangeKernel(
@@ -162,7 +159,6 @@ void launchMatKernel(const char* kernelName,
 		NULL);
 	checkErr(errNum, "clEnqueueNDRangeKernel");
     
-    printf("Kernel ran\n");
     
 	errNum = clEnqueueReadBuffer(
 		*queue, 
@@ -175,7 +171,6 @@ void launchMatKernel(const char* kernelName,
 		NULL, 
 		NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
-    printf("Memcpy complete\n");
 
 }
 
@@ -313,13 +308,9 @@ int main(int argc, char** argv)
 
     genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth, 50);
     genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth, 2); 
+   
     
-    for(int y = 0; y < i_sigHeight; y++){
-        for(int x = 0; x < i_sigWidth; x++){
-            printf("%f ", i_sig[y][x]);
-        }
-        printf("\n");
-    }
+    clock_t start = clock();
 
     launchMatKernel("convolveManhattan", &context, &queue, &program,
         sizeof(float),
@@ -327,8 +318,9 @@ int main(int argc, char** argv)
         o_sig, o_sigHeight, o_sigWidth,
         i_mask, i_maskHeight, i_maskWidth);
 
+    clock_t stop = clock();
+    printf("Time to execute was %ld \n", stop-start);
 
-    printf("Kernel done?\n");
     for(int y = 0; y < o_sigHeight; y++){
         for(int x = 0; x < o_sigWidth; x++){
             printf("%f ", o_sig[y][x]);
