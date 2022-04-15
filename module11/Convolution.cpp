@@ -107,7 +107,7 @@ void launchMatKernel(const char* kernelName,
 		 kernelName,
 		&errNum);
 	checkErr(errNum, "clCreateKernel");
-    printf("Kernel complied")
+    printf("Kernel complied");
 
 
 	// Now allocate buffers
