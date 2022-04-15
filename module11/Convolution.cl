@@ -61,10 +61,10 @@ __kernel void convolveManhattan(
 
         for (int c = 0; c < maskWidth; c++)
         {
-            float scale = 1/(abs(r - maskWidth/2) + abs(c - maskWidth/2))
+            float scale = 1/(abs(r - maskWidth/2) + abs(c - maskWidth/2));
 			sum += mask[(r * maskWidth)  + c] * input[idxIntmp + c] * scale;
         }
     } 
     
-	output[y * get_global_size(0) + x] = sum ;
+	output[y * get_global_size(0) + x] = sum;
 }
