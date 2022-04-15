@@ -69,7 +69,7 @@ void CL_CALLBACK contextCallback(
 }
 
 
-void genSquareMatrix(float** mat, int sizeX, int sizeY)
+void genSquareMatrix(float* mat, int sizeX, int sizeY)
 {
     srand(time(NULL));
     for(int y = 0; y < sizeY; y++){
@@ -311,8 +311,8 @@ int main(int argc, char** argv)
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
-    genSquareMatrix((float**)i_sig, i_sigHeight, i_sigWidth);
-    genSquareMatrix((float**)i_mask, i_maskHeight, i_maskWidth); 
+    genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth);
+    genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth); 
 
     launchMatKernel("convolveManhattan", &context, &queue, &program,
         sizeof(float),
