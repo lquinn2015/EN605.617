@@ -69,12 +69,12 @@ void CL_CALLBACK contextCallback(
 }
 
 
-void genSquareMatrix(float* mat, int sizeY, int sizeX)
+void genSquareMatrix(float* mat, int sizeY, int sizeX, int max)
 {
     srand(time(NULL));
     for(int y = 0; y < sizeY; y++){
         for(int x = 0; x < sizeX; x++){
-            mat[y*sizeY +x] = rand() % 50;
+            mat[y*sizeY +x] = rand() % max;
         }
     }
 }
@@ -311,8 +311,8 @@ int main(int argc, char** argv)
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
-    genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth);
-    genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth); 
+    genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth, 50);
+    genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth, 2); 
     
     for(int y = 0; y < i_sigHeight; y++){
         for(int x = 0; x < i_sigWidth; x++){
