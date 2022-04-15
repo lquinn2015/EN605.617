@@ -107,7 +107,7 @@ void launchMatKernel(const char* kernelName,
 		 kernelName,
 		&errNum);
 	checkErr(errNum, "clCreateKernel");
-    printf("Kernel complied");
+    printf("Kernel complied\n");
 
 
 	// Now allocate buffers
@@ -135,7 +135,7 @@ void launchMatKernel(const char* kernelName,
 		&errNum);
 	checkErr(errNum, "clCreateBuffer(outputSignal)");
     
-    printf("Buffers made");
+    printf("Buffers made\n");
 
     errNum  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputSignalBuffer);
 	errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &maskBuffer);
@@ -147,7 +147,7 @@ void launchMatKernel(const char* kernelName,
 	const size_t globalWorkSize[2] = { outW, outH };
     const size_t localWorkSize[2]  = { 1, 1 };
 
-    printf("Argument set");
+    printf("Argument set\n");
 
     // Queue the kernel up for execution across the array
     errNum = clEnqueueNDRangeKernel(
@@ -162,7 +162,7 @@ void launchMatKernel(const char* kernelName,
 		NULL);
 	checkErr(errNum, "clEnqueueNDRangeKernel");
     
-    printf("Kernel ran");
+    printf("Kernel ran\n");
     
 	errNum = clEnqueueReadBuffer(
 		*queue, 
@@ -175,7 +175,7 @@ void launchMatKernel(const char* kernelName,
 		NULL, 
 		NULL);
 	checkErr(errNum, "clEnqueueReadBuffer");
-    printf("Memcpy complete");
+    printf("Memcpy complete\n");
 
 }
 
@@ -321,7 +321,7 @@ int main(int argc, char** argv)
         i_mask, i_maskHeight, i_maskWidth);
 
 
-    printf("Kernel done?");
+    printf("Kernel done?\n");
     for(int y = 0; y < o_sigHeight; y++){
         for(int x = 0; x < o_sigWidth; x++){
             printf("%f ", o_sig[y][x]);
