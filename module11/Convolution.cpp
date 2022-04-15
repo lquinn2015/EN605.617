@@ -306,8 +306,10 @@ int main(int argc, char** argv)
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
+    int runs = 10;
+    long times[runs];
     long sum = 0;
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < runs; i++){
 
         clock_t start = clock();
         
@@ -321,8 +323,7 @@ int main(int argc, char** argv)
             i_mask, i_maskHeight, i_maskWidth);
 
         clock_t stop = clock();
-        sum += stop-start;
-        printf("Run %d executed in%ld \n", i, stop-start);
+        times[i] = stop-start;
     }
 
     for(int y = 0; y < o_sigHeight; y++){
@@ -331,8 +332,14 @@ int main(int argc, char** argv)
         }
         printf("\n");
     }
+    printf("Results fo the final run for verification\n");
+    long sum = 0;
+    for(int i = 0; i < runs; i++){
+        printf("run[%d] took %ld ms\n", i, times[i])
+        sum += times[i]
+    }   
 
-    printf("Total Exec for 10 runs was %ld, with an average of %ld\n", sum, sum/10);
+    printf("Total Exec for %d runs was %ld ms, with an average of %ld ms \n", runs sum, sum/runs);
 
 
 	return 0;
