@@ -22,7 +22,7 @@ __kernel void convolve(
     const int x = get_global_id(0);
     const int y = get_global_id(1);
 
-    float sum = 0;
+    uint  sum = 0;
     for(int r = 0; r < maskWidth; r++){
 
         for(int c = 0; c < maskWidth; c++){
