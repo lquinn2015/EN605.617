@@ -62,5 +62,5 @@ __kernel void convolveManhattan(
         }
     } 
     
-	output[y * get_global_size(0) + x] = sum * mScale;
+	output[y * get_global_size(0) + x] = sum ;
 }
