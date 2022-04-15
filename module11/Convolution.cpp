@@ -308,7 +308,6 @@ int main(int argc, char** argv)
 
     int runs = 10;
     long times[runs];
-    long sum = 0;
     for(int i = 0; i < runs; i++){
 
         clock_t start = clock();
@@ -335,11 +334,11 @@ int main(int argc, char** argv)
     printf("Results fo the final run for verification\n");
     long sum = 0;
     for(int i = 0; i < runs; i++){
-        printf("run[%d] took %ld ms\n", i, times[i])
-        sum += times[i]
+        printf("run[%d] took %ld ms\n", i, times[i]);
+        sum += times[i];
     }   
 
-    printf("Total Exec for %d runs was %ld ms, with an average of %ld ms \n", runs sum, sum/runs);
+    printf("Total Exec for %d runs was %ld ms, with an average of %ld ms \n", runs, sum, sum/runs);
 
 
 	return 0;
