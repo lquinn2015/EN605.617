@@ -306,20 +306,24 @@ int main(int argc, char** argv)
 		&errNum);
 	checkErr(errNum, "clCreateCommandQueue");
 
-    genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth, 50);
-    genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth, 2); 
-   
+    long sum = 0;
+    for(int i = 0; i < 10; i++){
+
+        clock_t start = clock();
+        
+        genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth, 50);
+        genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth, 2); 
     
-    clock_t start = clock();
+        launchMatKernel("convolveManhattan", &context, &queue, &program,
+            sizeof(float),
+            i_sig, i_sigHeight, i_sigWidth,
+            o_sig, o_sigHeight, o_sigWidth,
+            i_mask, i_maskHeight, i_maskWidth);
 
-    launchMatKernel("convolveManhattan", &context, &queue, &program,
-        sizeof(float),
-        i_sig, i_sigHeight, i_sigWidth,
-        o_sig, o_sigHeight, o_sigWidth,
-        i_mask, i_maskHeight, i_maskWidth);
-
-    clock_t stop = clock();
-    printf("Time to execute was %ld \n", stop-start);
+        clock_t stop = clock();
+        sum += stop-start;
+        printf("Run %d executed in%ld \n", i, stop-start);
+    }
 
     for(int y = 0; y < o_sigHeight; y++){
         for(int x = 0; x < o_sigWidth; x++){
@@ -328,8 +332,8 @@ int main(int argc, char** argv)
         printf("\n");
     }
 
+    printf("Total Exec for 10 runs was %ld, with an average of %ld\n", sum, sum/10);
 
-    std::cout << std::endl << "Executed program succesfully." << std::endl;
 
 	return 0;
 }
