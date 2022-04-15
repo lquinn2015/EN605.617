@@ -313,6 +313,13 @@ int main(int argc, char** argv)
 
     genSquareMatrix((float*)i_sig, i_sigHeight, i_sigWidth);
     genSquareMatrix((float*)i_mask, i_maskHeight, i_maskWidth); 
+    
+    for(int y = 0; y < i_sigHeight; y++){
+        for(int x = 0; x < i_sigWidth; x++){
+            printf("%f ", i_sig[y][x]);
+        }
+        printf("\n");
+    }
 
     launchMatKernel("convolveManhattan", &context, &queue, &program,
         sizeof(float),
