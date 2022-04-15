@@ -74,7 +74,7 @@ void genSquareMatrix(float* mat, int sizeY, int sizeX)
     srand(time(NULL));
     for(int y = 0; y < sizeY; y++){
         for(int x = 0; x < sizeX; x++){
-            mat[y*SizeY +x] = rand() % 50;
+            mat[y*sizeY +x] = rand() % 50;
         }
     }
 }
