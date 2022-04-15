@@ -48,7 +48,7 @@ __kernel void convolveManhattan(
 
 
     // Manhattan distance between to vectorss is abs(x_1-x_2) + abs(y_1-y_2)
-    const float mScale =  1 / (abs(x - intputWidth/2) + abs(y - inputWidth/2));
+    const float mScale =  1 / (abs(x - inputWidth/2) + abs(y - inputWidth/2));
     
 
     uint sum = 0;
