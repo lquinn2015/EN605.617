@@ -21,6 +21,6 @@ __kernel void square(__global * buffer)
 __kernel void average(__global * buffer, int n)
 {
 	size_t id = get_global_id(0);
-    if(id < n )
+    if(id+1 < n )
         buffer[id] = buffer[id] + buffer[id+1];
 }
