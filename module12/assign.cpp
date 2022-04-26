@@ -61,7 +61,7 @@ void OneDimSubBuffer(cl_mem main_buffer, cl_context context, cl_program program,
     }
 
     // call kernel for section of the filter
-    for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++)
+    for (int i = 0; i < NUM_BUFFER_ELEMENTS; i++)
     {
         // create the kernel
         cl_kernel kernel = clCreateKernel(
