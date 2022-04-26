@@ -268,7 +268,7 @@ int main(int argc, char** argv)
         // queue and call kernel
         errNum = clEnqueueNDRangeKernel(
             queue, 
-            kernel
+            kernel,
             1, 
             NULL,
             (const size_t*)&gWI, // only thing to do since filter is 2x2
