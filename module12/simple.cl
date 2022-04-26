@@ -20,7 +20,7 @@ __kernel void square(__global * buffer)
 
 __kernel void average(__global * buffer, int n)
 {
-	size_t id = get_global_id(0);
+	int id = get_global_id(0);
     int acc = 0;
     int c = 0;
     int idx = id;
@@ -29,5 +29,5 @@ __kernel void average(__global * buffer, int n)
         c++;
         printf("%d, %d\n", acc, c);
     }
-    buffer[id] = acc /c;
+    buffer[id] = acc / c;
 }
