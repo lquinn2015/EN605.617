@@ -280,7 +280,7 @@ int main(int argc, char** argv)
         // Read back computed data
         clEnqueueReadBuffer(
             queue,
-            &buffers[i],
+            buffers[i],
             CL_TRUE,
             0,
             sizeof(int) * 2, 
