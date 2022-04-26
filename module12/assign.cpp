@@ -70,7 +70,7 @@ void OneDimSubBuffer(cl_mem main_buffer, cl_context context, cl_program program,
             &errNum);
         checkErr(errNum, "clCreateKernel(average)");
 
-        int max_n = NUM_BUFFER_ELEMENTS;
+        int max_n = min(NUM_BUFFER_ELEMENTS-i , 4);
         // queue the data
         errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
         checkErr(errNum, "clSetKernelArg(average)");

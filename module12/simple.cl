@@ -25,8 +25,6 @@ __kernel void average(__global * buffer, int n)
     int idx = id;
     while( idx < (id+4) && idx < n){
         acc += buffer[idx++];
-        printf("%d, %d, %d\n", acc, idx, id);
     }
-    int c = min(n-id, 4);
-    buffer[id] = acc / c;
+    buffer[id] = acc / idx;
 }
