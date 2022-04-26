@@ -286,11 +286,7 @@ int main(int argc, char** argv)
             sizeof(int) * 2, 
             (void*)out_avg,
             0, NULL, NULL);
-        if(i == max_n) {
-            printf("Average up to %d is %d \n", i, out_avg[0]);
-        } else { 
-            printf("Average up to %d is %d \n", i, out_avg[1]);
-        }
+            printf("Average between %d : %d is %d \n", i, i+1, out_avg[0]);
     }
 
 
