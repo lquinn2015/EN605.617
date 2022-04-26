@@ -36,6 +36,76 @@ checkErr(cl_int err, const char * name)
     }
 }
 
+
+void OneDimSubBuffer(cl_mem main_buffer, cl_context context, cl_program program, cl_command_queue queue){
+
+    std::vector<cl_mem> buffers;
+    cl_int errNum;
+
+    // queue NUM_BUFFER_ELEMENTS SUB buffers 
+    for(int i = 0; i < NUM_BUFFER_ELEMENTS; i++){
+
+        cl_buffer_region filter2x2 = {
+            i * sizeof(int), // origion offset
+            4 * sizeof(int)  // size of collection beware of overread
+        };
+
+        cl_mem buffer = clCreateSubBuffer(
+            main_buffer,
+            CL_MEM_READ_WRITE,
+            CL_BUFFER_CREATE_TYPE_REGION,
+            &filter2x2,
+            &errNum);
+        checkErr(errNum, "clCreateSubBuffer");
+        buffers.push_back(buffer); // queue on this buffer
+    }
+
+    // call kernel for section of the filter
+    for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++)
+    {
+        // create the kernel
+        cl_kernel kernel = clCreateKernel(
+            program,
+            "average",
+            &errNum);
+        checkErr(errNum, "clCreateKernel(average)");
+
+        int max_n = NUM_BUFFER_ELEMENTS;
+        // queue the data
+        errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
+        checkErr(errNum, "clSetKernelArg(average)");
+        errNum = clSetKernelArg(kernel, 1, sizeof(int), (void *)&max_n);
+        checkErr(errNum, "clSetKernelArg(average)");
+        
+
+        size_t gWI = 1;
+        // queue and call kernel
+        errNum = clEnqueueNDRangeKernel(
+            queue, 
+            kernel,
+            1, 
+            NULL,
+            (const size_t*)&gWI, // only thing to do since filter is 2x2
+            (const size_t*)NULL, 
+            0, 0, NULL);
+
+
+        int out_avg[1];
+        // Read back computed data
+        clEnqueueReadBuffer(
+            queue,
+            buffers[i],
+            CL_TRUE,
+            0,
+            sizeof(int) , 
+            (void*)out_avg,
+            0, NULL, NULL);
+            printf("Average between %d : %d is %d \n", i, i+4, out_avg[0]);
+    }
+
+}
+
+
 ///
 //	main() for simple buffer and sub-buffer example
 //
@@ -48,9 +118,6 @@ int main(int argc, char** argv)
     cl_device_id * deviceIDs;
     cl_context context;
     cl_program program;
-    std::vector<cl_kernel> kernels;
-    std::vector<cl_command_queue> queues;
-    std::vector<cl_mem> buffers;
     int * inputOutput;
 
     int platform = DEFAULT_PLATFORM; 
@@ -183,7 +250,6 @@ int main(int argc, char** argv)
     }
 
 
-    // CHANGES START HERE
 
 
     // create buffers and sub-buffers
@@ -193,6 +259,7 @@ int main(int argc, char** argv)
         inputOutput[i] = i;
     }
 
+
     // create a single buffer to cover all the input data
     cl_mem main_buffer = clCreateBuffer(
         context,
@@ -201,24 +268,7 @@ int main(int argc, char** argv)
         NULL,
         &errNum);
     checkErr(errNum, "clCreateBuffer");
-
-    // queue NUM_BUFFER_ELEMENTS SUB buffers of size 2 each
-    for(int i = 0; i < NUM_BUFFER_ELEMENTS; i++){
-
-        cl_buffer_region filter2x2 = {
-            i * sizeof(int), // origion offset
-            2 * sizeof(int)  // size of collection beware of overread
-        };
-        cl_mem buffer = clCreateSubBuffer(
-            main_buffer,
-            CL_MEM_READ_WRITE,
-            CL_BUFFER_CREATE_TYPE_REGION,
-            &filter2x2,
-            &errNum);
-        checkErr(errNum, "clCreateSubBuffer");
-        buffers.push_back(buffer); // queue on this buffer
-    }
-
+    
     // we are going to use 1 device for simplicity
     InfoDevice<cl_device_type>::display(
         deviceIDs[0], 
@@ -232,7 +282,7 @@ int main(int argc, char** argv)
             0,
             &errNum);
     checkErr(errNum, "clCreateCommandQueue");
-
+    
     // Write input data to the total queue
     errNum = clEnqueueWriteBuffer(
         queue,
@@ -245,49 +295,8 @@ int main(int argc, char** argv)
         NULL,
         NULL);
 
+    OneDimSubBuffer(main_buffer, context, program, queue);
 
-    // call kernel for section of the filter
-    for (unsigned int i = 0; i < NUM_BUFFER_ELEMENTS; i++)
-    {
-        // create the kernel
-        cl_kernel kernel = clCreateKernel(
-            program,
-            "average",
-            &errNum);
-        checkErr(errNum, "clCreateKernel(average)");
-
-        int max_n = NUM_BUFFER_ELEMENTS;
-        // queue the data
-        errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&buffers[i]);
-        checkErr(errNum, "clSetKernelArg(average)");
-        errNum = clSetKernelArg(kernel, 1, sizeof(int), (void *)&max_n);
-        checkErr(errNum, "clSetKernelArg(average)");
-        
-
-        size_t gWI = 1;
-        // queue and call kernel
-        errNum = clEnqueueNDRangeKernel(
-            queue, 
-            kernel,
-            1, 
-            NULL,
-            (const size_t*)&gWI, // only thing to do since filter is 2x2
-            (const size_t*)NULL, 
-            0, 0, NULL);
-
-
-        int out_avg[1];
-        // Read back computed data
-        clEnqueueReadBuffer(
-            queue,
-            buffers[i],
-            CL_TRUE,
-            0,
-            sizeof(int) , 
-            (void*)out_avg,
-            0, NULL, NULL);
-            printf("Average between %d : %d is %d \n", i, i+1, out_avg[0]);
-    }
 
 
 
