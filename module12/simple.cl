@@ -27,5 +27,5 @@ __kernel void average(__global * buffer, int n)
         
         acc += buffer[i];
     }
-    buffer[id] = acc/(i-id);
+    buffer[id] = acc/(i-id)
 }
