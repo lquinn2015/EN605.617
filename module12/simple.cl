@@ -23,9 +23,11 @@ __kernel void average(__global * buffer, int n)
 	size_t id = get_global_id(0);
     int i = id;
     int acc = 0;
+    int c = 0;
     for(i = id; i < id+4 && i < n; i++){
         
         acc += buffer[i];
+        c++;
     }
-    buffer[id] = acc/(i-id);
+    buffer[id] = acc/c;
 }
