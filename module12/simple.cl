@@ -22,12 +22,11 @@ __kernel void average(__global * buffer, int n)
 {
 	int id = get_global_id(0);
     int acc = 0;
-    int c = 0;
     int idx = id;
     while( idx < (id+4) && idx < n){
         acc += buffer[idx++];
-        c++;
-        printf("%d, %d\n", acc, c);
+        printf("%d, %d\n", acc);
     }
+    int c = min(n-id, 4);
     buffer[id] = acc / c;
 }
