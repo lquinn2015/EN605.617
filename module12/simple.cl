@@ -27,6 +27,7 @@ __kernel void average(__global * buffer, int n)
     while( idx < (id+4) && idx < n){
         acc += buffer[idx++];
         c++;
+        printf("%d, %d\n", acc, c);
     }
     buffer[id] = acc /c;
 }
