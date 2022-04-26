@@ -276,14 +276,14 @@ int main(int argc, char** argv)
             0, 0, NULL);
 
 
-        int out_avg[2];
+        int out_avg[1];
         // Read back computed data
         clEnqueueReadBuffer(
             queue,
             buffers[i],
             CL_TRUE,
             0,
-            sizeof(int) * 2, 
+            sizeof(int) , 
             (void*)out_avg,
             0, NULL, NULL);
             printf("Average between %d : %d is %d \n", i, i+1, out_avg[0]);
