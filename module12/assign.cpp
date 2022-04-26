@@ -100,7 +100,7 @@ void OneDimSubBuffer(cl_mem main_buffer, cl_context context, cl_program program,
             sizeof(int) , 
             (void*)out_avg,
             0, NULL, NULL);
-            printf("Average between %d : %d is %d \n", i, i+4, out_avg[0]);
+            printf("Average between %d : %d is %d \n", i, std::min(i+4, 15), out_avg[0]);
     }
 
 }
