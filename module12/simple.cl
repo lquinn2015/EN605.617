@@ -17,3 +17,14 @@ __kernel void square(__global * buffer)
 	size_t id = get_global_id(0);
 	buffer[id] = buffer[id] * buffer[id];
 }
+
+__kernel void average(__global * buffer, int n)
+{
+	size_t id = get_global_id(0);
+    if(id < n - 1) { 
+	    buffer[id+1] = (buffer[id] + buffer[id+1])/2;
+    } 
+    /*else {  this is skipped because the last buffer was already averaged
+        buffer[id]
+    }*/
+}
