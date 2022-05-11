@@ -14,7 +14,9 @@ I support 3 modes
         0->2->6 ...
         1->3->5 ...
 
-I also have robust inputs that support the number of kernels to fire
+I also have robust inputs that support the number of kernels to fire see details below.
+The Makefile will run a few program runs with different arguments to meet the assignemtns
+requirements. 
 
 --help output
 Usage: async.exe [OPTION...]
