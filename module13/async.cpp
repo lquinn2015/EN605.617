@@ -266,7 +266,7 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     checkErr(errNum, "set call back");
 
     size_t gWI = 5;
-    errNum = clEnqueueNDRangeKernel(*queue, kern, 1, NULL,
+    errNum = clEnqueueNDRangeKernel(cdata->queue, kern, 1, NULL,
         (const size_t*)&gWI, (const size_t*)NULL, numBlocker, &blocker, &events[kIdx]);
     
     
