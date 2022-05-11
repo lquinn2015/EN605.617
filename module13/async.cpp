@@ -189,11 +189,13 @@ typedef struct kern_cb_data{
 }kern_cb_data_t;
 
 void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
+    printf("CL callback!\n");
     kern_cb_data_t *kparam = (kern_cb_data_t*)data;
     printf("kern %d callback status: %d\n", kparam->kIdx, status);
     int* out = new int[kparam->kBufSize];
-    clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize,
+    cl_int errNum = clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize,
                         (void*)out, 0, NULL, NULL);
+    checkErr(errNum, "Error?");
 
     printf("first 3 values %d %d %d \n", out[0], out[1], out[2]);
     delete out;
@@ -258,8 +260,10 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     
     cl_event blocker = NULL;
     int numBlocker = get_blocker(kIdx, events, &blocker, args);
+    printf("Kernel %d has %d blockers, %llx\n", kIdx, numBlocker, (long long)blocker);
 
-    clSetEventCallback(events[kIdx], CL_COMPLETE, &event_cb, cdata);
+    errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, &event_cb, cdata);
+    checkErr(errNum, "set call back");
 
     size_t gWI = 5;
     errNum = clEnqueueNDRangeKernel(*queue, kern, 1, NULL,
