@@ -191,13 +191,13 @@ typedef struct kern_cb_data{
 void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
     printf("CL callback!\n");
     kern_cb_data_t *kparam = (kern_cb_data_t*)data;
-    printf("kern %d callback status: %d\n", kparam->kIdx, status);
+    printf("KernId(%d), has size %d and status: %d\n", kparam->kIdx, kparam->kBufSize, status);
     int* out = new int[kparam->kBufSize];
     cl_int errNum = clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize,
                         (void*)out, 0, NULL, NULL);
     checkErr(errNum, "Error?");
 
-    printf("first 3 values %d %d %d \n", out[0], out[1], out[2]);
+    printf("first 3 values of kern(%d): %d %d %d \n", kparam->kIdx, out[0], out[1], out[2]);
     delete out;
 }
 	
