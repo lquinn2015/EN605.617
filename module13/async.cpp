@@ -197,7 +197,7 @@ void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
                         (void*)out, 0, NULL, NULL);
     checkErr(errNum, "Error?");
 
-    printf("first 3 values of kern(%d): %d %d %d \n", kparam->kIdx, out[0], out[1], out[2]);
+    printf("first 3 values of kern(%d): %d %d %d %d \n", kparam->kIdx, out[0], out[1], out[2], out[3]);
     delete out;
 }
 	
@@ -300,6 +300,7 @@ int main(int argc, char** argv){
 	for(int i = 0; i < args.eq; i++)
 	{
         printf("Launching Kernel %d\n", i);
+        kernIn[0]++;
 		launchKernelTree(&context, &queue, &program, events, i, &args);
 	}
 
