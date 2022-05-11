@@ -54,7 +54,7 @@ static struct argp_option options[] =
     {"size", 'n', "size", 0, "Problem size"},
     {"queued", 'q', "queued", 0, "Number of events/kernels to queue up"},
     {"callback", 'c', "callback", 0, "Mode for call backs"},
-    {"order", 'o', 0, 0, "Order of operations"},
+    {"order", 'o', "order", 0, "Order of operations"},
     {0}
 };
 
@@ -207,7 +207,7 @@ int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
     if(args->mode == 0 || kIdx == 0){ // no order
         return 0;
     } else if(args->mode == 1){ // in order
-        *blocker = events[kIdx];
+        *blocker = events[kIdx-1];
         return 1;
     } else if(args->mode == 2){ // even odd
         if(kIdx == 1){
