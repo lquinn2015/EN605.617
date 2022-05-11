@@ -262,14 +262,15 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     int numBlocker = get_blocker(kIdx, events, &blocker, args);
     printf("Kernel %d has %d blockers, %llx\n", kIdx, numBlocker, (long long)blocker);
 
-    errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, &event_cb, cdata);
+    errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, event_cb, cdata);
     checkErr(errNum, "set call back");
-    printf("Set event call back");
-    
+    printf("Set callback success!");
+
     size_t gWI = 5;
     errNum = clEnqueueNDRangeKernel(cdata->queue, kern, 1, NULL,
-        (const size_t*)&gWI, (const size_t*)NULL, 0, NULL, NULL);
-    checkErr(errNum, "kernel call failed");
+        (const size_t*)&gWI, (const size_t*)NULL, numBlocker, &blocker, &events[kIdx]);
+    checkErr(errNum, "Error with kernel enqueu");
+    
     
 }
 
