@@ -176,7 +176,7 @@ void opencl_bootstrap(cl_context *context, cl_command_queue *queue, cl_program *
 void init_args(pargs* args)
 {
 	args->n = 1024;
-	args->eq = 0;
+	args->eq = 1;
 	args->mode = 0;
 	args->order = 0;
 }
@@ -195,12 +195,13 @@ void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
     clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize,
                         (void*)out, 0, NULL, NULL);
 
-    printf("first 5 values %d %d %d %d %d\n", out[0], out[1], out[2]);
+    printf("first 3 values %d %d %d \n", out[0], out[1], out[2]);
     delete out;
 }
 	
 int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
 {
+    printf("Get the wait list for %d\n", kIdx); 
     if(args->mode == 0 || kIdx == 0){ // no order
         return 0;
     } else if(args->mode == 1){ // in order
@@ -213,6 +214,7 @@ int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
         *blocker = events[kIdx-2];
         return 1;
     }
+    return 0; // no waiting if fail
 
 }
 
@@ -262,7 +264,7 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     size_t gWI = 5;
     errNum = clEnqueueNDRangeKernel(*queue, kern, 1, NULL,
         (const size_t*)&gWI, (const size_t*)NULL, numBlocker, &blocker, &events[kIdx]);
-   
+    
     
 }
 
@@ -283,6 +285,7 @@ int main(int argc, char** argv){
     
 	for(int i = 0; i < args.eq; i++)
 	{
+        printf("Launching Kernel %d\n", i);
 		launchKernelTree(&context, &queue, &program, events, i, &args);
 	}
 

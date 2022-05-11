@@ -1,2 +1,2 @@
-all: assignment.c
-	g++ async.cpp -lOpenCL -o async.exe
+all: async.cpp
+	nvcc async.cpp -lOpenCL -o async.exe
