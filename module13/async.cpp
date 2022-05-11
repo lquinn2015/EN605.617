@@ -193,7 +193,7 @@ void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
     kern_cb_data_t *kparam = (kern_cb_data_t*)data;
     printf("KernId(%d), has size %d and status: %d\n", kparam->kIdx, kparam->kBufSize, status);
     int* out = new int[kparam->kBufSize];
-    cl_int errNum = clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize,
+    cl_int errNum = clEnqueueReadBuffer(kparam->queue, kparam->kBuf, CL_TRUE, 0, kparam->kBufSize * sizeof(int),
                         (void*)out, 0, NULL, NULL);
     checkErr(errNum, "Error?");
 
@@ -278,7 +278,6 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
 
     errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, event_cb, cdata);
     checkErr(errNum, "set call back");
-    printf("Set callback success!");
     
     
 }
