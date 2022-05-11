@@ -264,11 +264,12 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
 
     errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, &event_cb, cdata);
     checkErr(errNum, "set call back");
-
+    printf("Set event call back");
+    
     size_t gWI = 5;
     errNum = clEnqueueNDRangeKernel(cdata->queue, kern, 1, NULL,
-        (const size_t*)&gWI, (const size_t*)NULL, 0, NULL, &events[kIdx]);
-    
+        (const size_t*)&gWI, (const size_t*)NULL, 0, NULL, NULL);
+    checkErr(errNum, "kernel call failed");
     
 }
 
