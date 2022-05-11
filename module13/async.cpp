@@ -300,8 +300,8 @@ int main(int argc, char** argv){
 	for(int i = 0; i < args.eq; i++)
 	{
         printf("Launching Kernel %d\n", i);
-        kernIn[0]++;
 		launchKernelTree(&context, &queue, &program, events, i, &args);
+        kernIn[0]++;
 	}
 
     return 0;
