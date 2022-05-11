@@ -234,6 +234,7 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     checkErr(errNum, "clCreateKernel");
 
     kern_cb_data_t* cdata = new kern_cb_data_t;
+    cdata->kIdx = kIdx;
     cdata->queue = *queue;
     cdata->kBuf = clCreateBuffer(
         *context,
