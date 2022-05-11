@@ -262,9 +262,6 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     int numBlocker = get_blocker(kIdx, events, &blocker, args);
     printf("Kernel %d has %d blockers, %llx\n", kIdx, numBlocker, (long long)blocker);
     
-    //errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, event_cb, cdata);
-    //checkErr(errNum, "set call back");
-    //printf("Set callback success!");
 
     size_t gWI = 5;
     if(numBlocker == 0){
@@ -278,6 +275,9 @@ void launchKernelTree(cl_context *context, cl_command_queue *queue, cl_program *
     }
     checkErr(errNum, "Error with kernel enqueu");
 
+    errNum = clSetEventCallback(events[kIdx], CL_COMPLETE, event_cb, cdata);
+    checkErr(errNum, "set call back");
+    printf("Set callback success!");
     
     
 }
