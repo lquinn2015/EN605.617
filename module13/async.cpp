@@ -307,6 +307,11 @@ int main(int argc, char** argv){
     
     opencl_bootstrap(&context, &queue, &program, "simple.cl"); 
 	cl_event* events = new cl_event[args.eq+1];
+    cl_int errNum;
+    for(int i = 0; i < args.eq; i++){
+        
+        events[i] = clCreateUserEvent(context, &errNum);
+    }
     
 	for(int i = 0; i < args.eq; i++)
 	{
