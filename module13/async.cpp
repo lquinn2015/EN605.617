@@ -216,18 +216,7 @@ int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
         }
         *blocker = events[kIdx-2];
         return 1;
-    } else if(args->mode == 3){
-
-        if(args->eq-1 == kIdx) return 0;
-        *blocker = events[kIdx+1];
-        return 1;
-
-    } else if(args->mode == 4){
-        if(args->eq-1 == kIdx) return 0;
-        if(args->eq-2 == kIdx) return 0;
-        *blocker = events[kIdx+2];
-        return 1;
-    }   
+    }
     return 0;
 }
 
