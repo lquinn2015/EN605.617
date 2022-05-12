@@ -204,9 +204,10 @@ void CL_CALLBACK event_cb(cl_event event, cl_int status, void* data){
 int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
 {
     printf("Get the wait list for %d\n", kIdx); 
-    if(args->mode == 0 || kIdx == 0){ // no order
+    if(args->mode == 0){ // no order
         return 0;
     } else if(args->mode == 1){ // in order
+        if(kIdx == 0) return 0;
         *blocker = events[kIdx-1];
         return 1;
     } else if(args->mode == 2){ // even odd
@@ -215,9 +216,18 @@ int get_blocker(int kIdx, cl_event *events, cl_event *blocker, pargs *args)
         }
         *blocker = events[kIdx-2];
         return 1;
-    }
-    return 0; // no waiting if fail
+    } else if(args->mode == 3){
 
+        if(args->eq-1 == kIdx) return 0;
+        *blocker = events[kIdx+1];
+
+    } else if(args->mode == 4){
+        if(args->eq-1 == kIdx) return 0;
+        if(args->eq-2 == kIdx) return 0;
+        *blocker = events[kIdx+2];
+    
+    }
+    return 0;
 }
 
 
